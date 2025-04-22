@@ -497,8 +497,9 @@ elif selected_page == "Confusion Matrices":
         # Add colorbar
         plt.colorbar(im)
         
-        # Add text annotations
-        thresh = im.norm(cm.max()) / 2.
+        # Add text annotations - FIXED CODE HERE
+        # Calculate threshold for text color
+        thresh = cm.max() / 2.0
         for i in range(2):
             for j in range(2):
                 ax.text(j, i, f'{cm[i][j]}',
