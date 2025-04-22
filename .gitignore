@@ -1,0 +1,121 @@
+# Python bytecode / compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Streamlit
+.streamlit/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Data files
+*.csv
+*.xlsx
+*.xls
+*.json
+*.pickle
+*.pkl
+*.h5
+*.parquet
+*.feather
+*.db
+*.sqlite
+*.sqlite3
+
+# Model files
+*.joblib
+*.h5
+*.model
+*.pth
+*.pt
+*.keras
+
+# Log files
+*.log
+logs/
+log/
+
+# Plots and images (optional, uncomment if needed)
+# *.png
+# *.jpg
+# *.jpeg
+# *.gif
+# *.svg
+# *.pdf
+
+# Temporary files
+tmp/
+temp/
+.~*
+
+# Secrets
+.streamlit/secrets.toml
+.env.local
+credentials.json
+config.local.py
+
+# Large files (optional, uncomment and modify if using Git LFS)
+# *.csv
+# *.sqlite
+# *.tar.gz
+# *.zip
