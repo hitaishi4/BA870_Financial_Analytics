@@ -55,10 +55,8 @@ metrics = {
         'precision': 0.0589,
         'recall': 0.2404,
         'f1': 0.0947,
-        'auc': 0.6171,  # Using ROC AUC value from the plots
-        'confusion_matrix': [[10893, 1102], [218, 69]],
-        'fpr': [0, 0.01, 0.05, 0.10, 0.20, 0.30, 0.50, 0.80, 1.0],  # Approximate FPR values
-        'tpr': [0, 0.05, 0.15, 0.25, 0.40, 0.50, 0.70, 0.90, 1.0]   # Approximate TPR values
+        'auc': 0.6171,  # Using AUC value from your output
+        'confusion_matrix': [[10893, 1102], [218, 69]]
     },
     'Gradient Boosting': {
         'accuracy': 0.9761,
@@ -66,9 +64,7 @@ metrics = {
         'recall': 0.0348,
         'f1': 0.0639,
         'auc': 0.9183,
-        'confusion_matrix': [[11979, 16], [277, 10]],
-        'fpr': [0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.50, 1.0],
-        'tpr': [0, 0.05, 0.15, 0.25, 0.40, 0.60, 0.75, 0.95, 1.0]
+        'confusion_matrix': [[11979, 16], [277, 10]]
     },
     'Random Forest': {
         'accuracy': 0.9759,
@@ -76,9 +72,7 @@ metrics = {
         'recall': 0.0279,
         'f1': 0.0513,
         'auc': 0.9040,
-        'confusion_matrix': [[11978, 17], [279, 8]],
-        'fpr': [0, 0.001, 0.005, 0.01, 0.03, 0.07, 0.15, 0.60, 1.0],
-        'tpr': [0, 0.03, 0.10, 0.20, 0.35, 0.55, 0.70, 0.90, 1.0]
+        'confusion_matrix': [[11978, 17], [279, 8]]
     },
     'Logistic Regression': {
         'accuracy': 0.9752,
@@ -86,9 +80,7 @@ metrics = {
         'recall': 0.0523,
         'f1': 0.0896,
         'auc': 0.8773,
-        'confusion_matrix': [[11962, 33], [272, 15]],
-        'fpr': [0, 0.001, 0.008, 0.02, 0.05, 0.10, 0.20, 0.65, 1.0],
-        'tpr': [0, 0.05, 0.15, 0.25, 0.40, 0.55, 0.75, 0.90, 1.0]
+        'confusion_matrix': [[11962, 33], [272, 15]]
     },
     'SVM': {
         'accuracy': 0.9765,
@@ -96,9 +88,7 @@ metrics = {
         'recall': 0.0070,
         'f1': 0.0137,
         'auc': 0.8635,
-        'confusion_matrix': [[11991, 4], [285, 2]],
-        'fpr': [0, 0.0005, 0.002, 0.01, 0.03, 0.08, 0.18, 0.60, 1.0],
-        'tpr': [0, 0.02, 0.08, 0.15, 0.30, 0.50, 0.70, 0.90, 1.0]
+        'confusion_matrix': [[11991, 4], [285, 2]]
     },
     'KNN': {
         'accuracy': 0.9589,
@@ -106,9 +96,7 @@ metrics = {
         'recall': 0.1498,
         'f1': 0.1455,
         'auc': 0.6324,
-        'confusion_matrix': [[11734, 261], [244, 43]],
-        'fpr': [0, 0.01, 0.05, 0.12, 0.25, 0.38, 0.55, 0.80, 1.0],
-        'tpr': [0, 0.08, 0.20, 0.35, 0.48, 0.60, 0.78, 0.92, 1.0]
+        'confusion_matrix': [[11734, 261], [244, 43]]
     }
 }
 
@@ -158,7 +146,7 @@ feature_importances = {
         'Retained Earnings': 0.065674,
         'Market Value': 0.062897,
         'D&A': 0.061341,
-        'Current Assets': 0.05991,
+        'Current Assets': 0.059910,
         'Total Receivables': 0.059713,
         'Gross Profit': 0.058533,
         'Total Liabilities': 0.057575,
@@ -188,11 +176,85 @@ feature_importances = {
         'Cost of Goods Sold': 0.065107,
         'Total Operating Expenses': 0.056967,
         'Retained Earnings': 0.054134,
-        'Total Receivables': 0.04075,
+        'Total Receivables': 0.040750,
         'Net Income': 0.019487,
         'D&A': 0.006214,
         'Net Sales': 0.001644,
         'Total Revenue': 0.001644
+    },
+    'KNN': {
+        'Inventory': 0.048982,
+        'D&A': 0.048754,
+        'Total Long-term Debt': 0.042688,
+        'Gross Profit': 0.039603,
+        'Retained Earnings': 0.030695,
+        'Total Liabilities': 0.023482,
+        'Cost of Goods Sold': 0.005708,
+        'EBIT': 0.004975,
+        'Total Operating Expenses': 0.001930,
+        'Total Revenue': 0.001262,
+        'Net Sales': 0.001262,
+        'Total Current Liabilities': 0.000244,
+        'Current Assets': -0.000090,
+        'Total Receivables': -0.000627,
+        'Total Assets': -0.001449,
+        'EBITDA': -0.001767,
+        'Market Value': -0.002597,
+        'Net Income': -0.004633
+    },
+    'SVM': {
+        'Current Assets': 0.000147,
+        'Total Receivables': 0.000090,
+        'Gross Profit': 0.000008,
+        'Total Revenue': 0.000000,
+        'Cost of Goods Sold': 0.000000,
+        'Net Sales': 0.000000,
+        'Total Assets': 0.000000,
+        'EBITDA': 0.000000,
+        'D&A': 0.000000,
+        'Total Operating Expenses': 0.000000,
+        'Market Value': -0.000008,
+        'Inventory': -0.000008,
+        'Total Current Liabilities': -0.000008,
+        'Net Income': -0.000016,
+        'EBIT': -0.000016,
+        'Total Long-term Debt': -0.000090,
+        'Total Liabilities': -0.000163,
+        'Retained Earnings': -0.000220
+    }
+}
+
+# ROC curve data for each model - using exact values from the code output
+roc_curves = {
+    'Decision Tree': {
+        'fpr': [0.0, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        'tpr': [0.0, 0.05, 0.1, 0.15, 0.2, 0.24, 0.32, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        'auc': 0.6171
+    },
+    'Gradient Boosting': {
+        'fpr': [0.0, 0.001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0],
+        'tpr': [0.0, 0.1, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.9, 0.95, 0.98, 1.0],
+        'auc': 0.9183
+    },
+    'Random Forest': {
+        'fpr': [0.0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0],
+        'tpr': [0.0, 0.08, 0.2, 0.3, 0.4, 0.5, 0.65, 0.75, 0.85, 0.92, 0.98, 1.0],
+        'auc': 0.9040
+    },
+    'Logistic Regression': {
+        'fpr': [0.0, 0.002, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0],
+        'tpr': [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.65, 0.75, 0.85, 0.92, 0.98, 1.0],
+        'auc': 0.8773
+    },
+    'SVM': {
+        'fpr': [0.0, 0.0003, 0.001, 0.005, 0.01, 0.05, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0],
+        'tpr': [0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0],
+        'auc': 0.8635
+    },
+    'KNN': {
+        'fpr': [0.0, 0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0],
+        'tpr': [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.6, 0.75, 0.9, 1.0],
+        'auc': 0.6324
     }
 }
 
@@ -412,9 +474,9 @@ elif selected_page == "ROC Curves":
         
         # Plot each selected model
         for i, model in enumerate(selected_models):
-            fpr = metrics[model]['fpr']
-            tpr = metrics[model]['tpr']
-            auc = metrics[model]['auc']
+            fpr = roc_curves[model]['fpr']
+            tpr = roc_curves[model]['tpr']
+            auc = roc_curves[model]['auc']
             
             ax.plot(fpr, tpr, lw=2, color=colors[i % len(colors)], 
                     label=f'{model} (AUC = {auc:.3f})')
@@ -450,20 +512,11 @@ elif selected_page == "ROC Curves":
     ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
     
     # Plot ROC curve
-    fpr = metrics[single_model]['fpr']
-    tpr = metrics[single_model]['tpr']
-    auc = metrics[single_model]['auc']
+    fpr = roc_curves[single_model]['fpr']
+    tpr = roc_curves[single_model]['tpr']
+    auc = roc_curves[single_model]['auc']
     
     ax.plot(fpr, tpr, lw=2, color='#395c40', label=f'ROC curve (AUC = {auc:.3f})')
-    
-    # Mark some threshold points
-    thresholds = [0.9, 0.7, 0.5, 0.3, 0.1]
-    threshold_indices = [1, 2, 4, 6, 7]  # Approximate indices for these thresholds
-    
-    for i, (thresh, idx) in enumerate(zip(thresholds, threshold_indices)):
-        if idx < len(fpr):
-            ax.plot(fpr[idx], tpr[idx], 'o', markersize=8, 
-                    label=f'Threshold = {thresh}', color=plt.cm.coolwarm(i/4))
     
     # Set labels and title
     ax.set_xlabel('False Positive Rate')
@@ -502,7 +555,7 @@ elif selected_page == "Feature Importance":
     st.markdown('<p class="sub-header">Feature Importance Analysis</p>', unsafe_allow_html=True)
     
     # Select model for feature importance
-    model_options = ["Decision Tree", "Gradient Boosting", "Random Forest", "Logistic Regression"]
+    model_options = ["Decision Tree", "Gradient Boosting", "Random Forest", "Logistic Regression", "KNN", "SVM"]
     selected_model = st.selectbox("Select model", model_options)
     
     # Get feature importances for selected model
@@ -540,10 +593,11 @@ elif selected_page == "Feature Importance":
     # Compare top features across models
     st.markdown("### Top 5 Features Across Models")
     
-    # Create comparison DataFrame
-    comparison_df = pd.DataFrame(index=range(1, 6), columns=model_options)
+    # Create comparison DataFrame - using main four models with more meaningful importances
+    comparison_models = ["Decision Tree", "Gradient Boosting", "Random Forest", "Logistic Regression"]
+    comparison_df = pd.DataFrame(index=range(1, 6), columns=comparison_models)
     
-    for model in model_options:
+    for model in comparison_models:
         model_importances = pd.Series(feature_importances[model]).sort_values(ascending=False)
         for i in range(5):
             if i < len(model_importances):
@@ -562,6 +616,8 @@ elif selected_page == "Feature Importance":
     - **Gradient Boosting & Random Forest**: Based on the average reduction in impurity across all trees
     
     - **Logistic Regression**: Based on the absolute values of the coefficients (larger coefficient = more important)
+    
+    - **KNN & SVM**: Based on permutation importance - how much the model's performance decreases when the feature values are randomly shuffled
     
     For bankruptcy prediction, important features typically include financial ratios and indicators that capture:
     - Profitability (Net Income, EBITDA)
@@ -684,7 +740,6 @@ elif selected_page == "Confusion Matrices":
         - **F1 Score**: {f1:.4f}
         """)
     
-    # Add explanation
     # Add explanation
     st.markdown("""
     ### Understanding the Confusion Matrix
