@@ -14,6 +14,10 @@ from sklearn.pipeline import Pipeline
 import time
 
 # Import custom modules
+from visualizations import plot_roc_curves, plot_feature_importances, plot_confusion_matrices, plot_model_comparison
+from data_loader import load_data, preprocess_data
+from model_trainer import train_models, evaluate_models
+from utils import get_model_names, get_metrics_df
 from data_loader import load_data, preprocess_data
 from model_trainer import train_models, evaluate_models
 from visualizations import (
