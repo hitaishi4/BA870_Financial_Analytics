@@ -12,6 +12,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+from sklearn.inspection import permutation_importance
 
 # 1. Data utilities
 @st.cache_data
@@ -32,9 +33,9 @@ def load_data(path: str = "data/american_bankruptcy.csv") -> pd.DataFrame:
     df = df.rename(columns=rename_map)
     return df.drop(columns=["status_label"])
 
-def split_data(df: pd.DataFrame, target: str, test_size: float = 0.3, random_state: int = 42):
-    X = df.drop(columns=[target])
-    y = df[target]
+def split_data(df: pd.DataFrame, target_col: str, test_size: float = 0.3, random_state: int = 42):
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
     return train_test_split(X, y, test_size=test_size, random_state=random_state)
 
 # 2. Modeling utilities
@@ -47,39 +48,54 @@ def train_models(X_train, y_train) -> dict:
         "SVM": SVC(probability=True),
         "KNN": KNeighborsClassifier()
     }
-    fitted = {}
-    for name, m in models.items():
-        pipeline = Pipeline([("scaler", StandardScaler()), ("clf", m)])
-        pipeline.fit(X_train, y_train)
-        fitted[name] = pipeline
-    return fitted
+    pipelines = {}
+    for name, clf in models.items():
+        pipe = Pipeline([("scaler", StandardScaler()), ("clf", clf)])
+        pipe.fit(X_train, y_train)
+        pipelines[name] = pipe
+    return pipelines
 
-def get_metrics(models: dict, X_test, y_test) -> dict:
+def get_metrics(pipelines: dict, X_test, y_test) -> dict:
     results = {}
-    for name, m in models.items():
-        y_pred = m.predict(X_test)
-        y_proba = m.predict_proba(X_test)[:, 1]
+    for name, pipe in pipelines.items():
+        y_pred = pipe.predict(X_test)
+        y_proba = pipe.predict_proba(X_test)[:, 1]
         fpr, tpr, _ = roc_curve(y_test, y_proba)
         auc_score = auc(fpr, tpr)
         cm = confusion_matrix(y_test, y_pred)
         cr = classification_report(y_test, y_pred, output_dict=True)
         results[name] = {
-            "fpr": fpr, "tpr": tpr, "auc": auc_score,
-            "cm": cm, "cr": cr
+            "fpr": fpr,
+            "tpr": tpr,
+            "auc": auc_score,
+            "cm": cm,
+            "cr": cr
         }
     return results
 
+def get_feature_importances(pipelines: dict, feature_names: list) -> dict:
+    imps = {}
+    for name in ["Decision Tree", "Random Forest", "Gradient Boosting"]:
+        pipe = pipelines.get(name)
+        if hasattr(pipe.named_steps["clf"], "feature_importances_"):
+            imps[name] = pd.Series(
+                pipe.named_steps["clf"].feature_importances_, index=feature_names
+            ).sort_values(ascending=False)
+    return imps
+
+def get_permutation_importances(pipelines: dict, X_test, y_test, feature_names: list) -> dict:
+    perm_imps = {}
+    for name, pipe in pipelines.items():
+        r = permutation_importance(pipe, X_test, y_test, n_repeats=10, random_state=42)
+        perm_imps[name] = pd.Series(r.importances_mean, index=feature_names).sort_values(ascending=False)
+    return perm_imps
+
 # 3. Tab views
-def show_data_tab(df: pd.DataFrame):
+def show_overview_tab(df: pd.DataFrame):
     st.subheader("Dataset Overview")
-    st.dataframe(df.head())
-    st.write(f"Shape: {df.shape}")
-    st.subheader("Feature Distributions")
-    for col in df.select_dtypes(include=["number"]).columns:
-        fig, ax = plt.subplots()
-        ax.hist(df[col].dropna(), bins=30)
-        ax.set_title(col)
-        st.pyplot(fig)
+    st.write(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
+    st.subheader("Features")
+    st.write(", ".join(df.columns))
 
 def show_training_tab(results: dict):
     st.subheader("Training AUC Scores")
@@ -89,9 +105,9 @@ def show_training_tab(results: dict):
 def show_comparison_tab(results: dict):
     st.subheader("Model AUC Comparison")
     names = list(results.keys())
-    aucs = [r['auc'] for r in results.values()]
+    aucs = [r["auc"] for r in results.values()]
     fig, ax = plt.subplots()
-    ax.bar(names, aucs)
+    ax.bar(names, aucs, edgecolor='black')
     ax.set_ylim(0,1)
     ax.set_ylabel("AUC")
     ax.set_xticklabels(names, rotation=45, ha="right")
@@ -117,9 +133,10 @@ def show_confusion_tab(results: dict):
         ax.set_title(name)
         ax.set_xticks([0,1]); ax.set_yticks([0,1])
         ax.set_xticklabels(["Alive","Bankrupt"]); ax.set_yticklabels(["Alive","Bankrupt"])
-        for i in range(2):
-            for j in range(2):
-                ax.text(j, i, cm[i,j], ha="center", va="center")
+        thresh = cm.max() / 2
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                ax.text(j, i, cm[i,j], ha="center", va="center", color="white" if cm[i,j]>thresh else "black")
         st.pyplot(fig)
 
 def show_classification_tab(results: dict):
@@ -129,10 +146,22 @@ def show_classification_tab(results: dict):
         st.write(f"**{name}**")
         st.dataframe(df_cr)
 
-def show_prediction_tab(models: dict, features: list):
-    st.subheader("Make a New Prediction")
-    inputs = {feat: st.number_input(feat, value=0.0) for feat in features}
-    model_name = st.selectbox("Select Model", list(models.keys()))
-    if st.button("Predict"):
-        proba = models[model_name].predict_proba(pd.DataFrame([inputs]))[0,1]
-        st.write(f"Predicted Bankruptcy Probability: {proba:.1%}")
+def show_feature_importance_tab(imps: dict):
+    st.subheader("Feature Importances (Tree Models)")
+    for name, series in imps.items():
+        st.write(f"**{name}**")
+        fig, ax = plt.subplots(figsize=(6,4))
+        series.head(10).plot.bar(ax=ax)
+        ax.set_ylabel("Importance")
+        ax.set_title(f"{name} Top 10 Features")
+        st.pyplot(fig)
+
+def show_permutation_tab(imps: dict):
+    st.subheader("Permutation Importances")
+    for name, series in imps.items():
+        st.write(f"**{name}**")
+        fig, ax = plt.subplots(figsize=(6,4))
+        series.head(10).plot.bar(ax=ax)
+        ax.set_ylabel("Importance")
+        ax.set_title(f"{name} Top 10 Permutation Importances")
+        st.pyplot(fig)
