@@ -1,3 +1,5 @@
+
+# tabs.py
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -86,12 +88,36 @@ def get_metrics(pipelines: dict, X_test, y_test) -> dict:
         }
     return results
 
+def get_feature_importances(models: dict, feature_names: list) -> dict:
+    imps = {}
+    for name, pipe in models.items():
+        if hasattr(pipe['clf'], 'feature_importances_'):
+            importances = pipe['clf'].feature_importances_
+            imps[name] = pd.Series(importances, index=feature_names).sort_values(ascending=False)
+    return imps
+
+def get_permutation_importances(models: dict, X_test, y_test, feature_names: list) -> dict:
+    X_test = X_test.select_dtypes(include=['number']).fillna(0)
+    imps = {}
+    for name, pipe in models.items():
+        result = permutation_importance(pipe, X_test, y_test, n_repeats=5, random_state=42)
+        imps[name] = pd.Series(result.importances_mean, index=feature_names).sort_values(ascending=False)
+    return imps
+
 # 3. Tab views
 def show_overview_tab(df: pd.DataFrame):
     st.subheader("Dataset Overview")
     st.write(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
     st.subheader("Features")
-    st.write(", ".join(df.drop(columns=["status_label"]).columns))
+    st.write(", ".join([col for col in df.columns if col != "Bankruptcy"]))
+    st.dataframe(df.head())
+    
+    # Show bankruptcy distribution
+    st.subheader("Bankruptcy Distribution")
+    bankruptcy_counts = df["Bankruptcy"].value_counts()
+    fig, ax = plt.subplots()
+    ax.pie(bankruptcy_counts, labels=["Alive", "Bankrupt"], autopct='%1.1f%%')
+    st.pyplot(fig)
 
 def show_training_tab(results: dict):
     st.subheader("Model Performance Metrics")
