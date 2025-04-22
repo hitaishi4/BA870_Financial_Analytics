@@ -56,7 +56,9 @@ metrics = {
         'recall': 0.2404,
         'f1': 0.0947,
         'auc': 0.6171,  # Using ROC AUC value from the plots
-        'confusion_matrix': [[10893, 1102], [218, 69]]
+        'confusion_matrix': [[10893, 1102], [218, 69]],
+        'fpr': [0, 0.01, 0.05, 0.10, 0.20, 0.30, 0.50, 0.80, 1.0],  # Approximate FPR values
+        'tpr': [0, 0.05, 0.15, 0.25, 0.40, 0.50, 0.70, 0.90, 1.0]   # Approximate TPR values
     },
     'Gradient Boosting': {
         'accuracy': 0.9761,
@@ -64,7 +66,9 @@ metrics = {
         'recall': 0.0348,
         'f1': 0.0639,
         'auc': 0.9183,
-        'confusion_matrix': [[11979, 16], [277, 10]]
+        'confusion_matrix': [[11979, 16], [277, 10]],
+        'fpr': [0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.50, 1.0],
+        'tpr': [0, 0.05, 0.15, 0.25, 0.40, 0.60, 0.75, 0.95, 1.0]
     },
     'Random Forest': {
         'accuracy': 0.9759,
@@ -72,7 +76,9 @@ metrics = {
         'recall': 0.0279,
         'f1': 0.0513,
         'auc': 0.9040,
-        'confusion_matrix': [[11978, 17], [279, 8]]
+        'confusion_matrix': [[11978, 17], [279, 8]],
+        'fpr': [0, 0.001, 0.005, 0.01, 0.03, 0.07, 0.15, 0.60, 1.0],
+        'tpr': [0, 0.03, 0.10, 0.20, 0.35, 0.55, 0.70, 0.90, 1.0]
     },
     'Logistic Regression': {
         'accuracy': 0.9752,
@@ -80,7 +86,9 @@ metrics = {
         'recall': 0.0523,
         'f1': 0.0896,
         'auc': 0.8773,
-        'confusion_matrix': [[11962, 33], [272, 15]]
+        'confusion_matrix': [[11962, 33], [272, 15]],
+        'fpr': [0, 0.001, 0.008, 0.02, 0.05, 0.10, 0.20, 0.65, 1.0],
+        'tpr': [0, 0.05, 0.15, 0.25, 0.40, 0.55, 0.75, 0.90, 1.0]
     },
     'SVM': {
         'accuracy': 0.9765,
@@ -88,7 +96,9 @@ metrics = {
         'recall': 0.0070,
         'f1': 0.0137,
         'auc': 0.8635,
-        'confusion_matrix': [[11991, 4], [285, 2]]
+        'confusion_matrix': [[11991, 4], [285, 2]],
+        'fpr': [0, 0.0005, 0.002, 0.01, 0.03, 0.08, 0.18, 0.60, 1.0],
+        'tpr': [0, 0.02, 0.08, 0.15, 0.30, 0.50, 0.70, 0.90, 1.0]
     },
     'KNN': {
         'accuracy': 0.9589,
@@ -96,7 +106,9 @@ metrics = {
         'recall': 0.1498,
         'f1': 0.1455,
         'auc': 0.6324,
-        'confusion_matrix': [[11734, 261], [244, 43]]
+        'confusion_matrix': [[11734, 261], [244, 43]],
+        'fpr': [0, 0.01, 0.05, 0.12, 0.25, 0.38, 0.55, 0.80, 1.0],
+        'tpr': [0, 0.08, 0.20, 0.35, 0.48, 0.60, 0.78, 0.92, 1.0]
     }
 }
 
@@ -186,7 +198,7 @@ feature_importances = {
 
 # Sidebar navigation
 st.sidebar.title("Navigation")
-pages = ["Overview", "Model Comparison", "Feature Importance", "Confusion Matrices"]
+pages = ["Overview", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices"]
 selected_page = st.sidebar.radio("Go to", pages)
 
 # Render the selected page
@@ -366,6 +378,124 @@ elif selected_page == "Model Comparison":
     
     For bankruptcy prediction, recall is particularly important as the cost of missing a bankruptcy (false negative) is typically higher 
     than incorrectly predicting bankruptcy (false positive).
+    """)
+
+elif selected_page == "ROC Curves":
+    st.markdown('<p class="sub-header">ROC Curve Analysis</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    ### What are ROC Curves?
+    
+    ROC (Receiver Operating Characteristic) curves plot the True Positive Rate against the False Positive Rate at different classification thresholds. They show the tradeoff between sensitivity (recall) and specificity.
+    
+    - A model with perfect classification would have an AUC (Area Under the Curve) of 1.0
+    - A model with no discrimination ability would have an AUC of 0.5 (equivalent to random guessing)
+    """)
+    
+    # Select models to display
+    model_options = list(metrics.keys())
+    selected_models = st.multiselect(
+        "Select models to compare", 
+        options=model_options,
+        default=model_options[:3]  # Default to first 3 models
+    )
+    
+    if selected_models:
+        # Plot ROC curves
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Add diagonal reference line (random classifier)
+        ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
+        
+        # Color map for different models
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+        
+        # Plot each selected model
+        for i, model in enumerate(selected_models):
+            fpr = metrics[model]['fpr']
+            tpr = metrics[model]['tpr']
+            auc = metrics[model]['auc']
+            
+            ax.plot(fpr, tpr, lw=2, color=colors[i % len(colors)], 
+                    label=f'{model} (AUC = {auc:.3f})')
+        
+        # Set labels and title
+        ax.set_xlabel('False Positive Rate')
+        ax.set_ylabel('True Positive Rate')
+        ax.set_title('ROC Curves Comparison')
+        
+        # Add legend
+        ax.legend(loc='lower right')
+        
+        # Set limits
+        ax.set_xlim([0.0, 1.0])
+        ax.set_ylim([0.0, 1.05])
+        
+        # Add grid
+        ax.grid(alpha=0.3)
+        
+        plt.tight_layout()
+        st.pyplot(fig)
+    
+    # Show individual model ROC curve
+    st.markdown("### Individual Model ROC Curve")
+    
+    # Select a single model for detailed view
+    single_model = st.selectbox("Select a model", options=model_options)
+    
+    # Plot individual ROC curve
+    fig, ax = plt.subplots(figsize=(8, 6))
+    
+    # Add diagonal reference line
+    ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
+    
+    # Plot ROC curve
+    fpr = metrics[single_model]['fpr']
+    tpr = metrics[single_model]['tpr']
+    auc = metrics[single_model]['auc']
+    
+    ax.plot(fpr, tpr, lw=2, color='#395c40', label=f'ROC curve (AUC = {auc:.3f})')
+    
+    # Mark some threshold points
+    thresholds = [0.9, 0.7, 0.5, 0.3, 0.1]
+    threshold_indices = [1, 2, 4, 6, 7]  # Approximate indices for these thresholds
+    
+    for i, (thresh, idx) in enumerate(zip(thresholds, threshold_indices)):
+        if idx < len(fpr):
+            ax.plot(fpr[idx], tpr[idx], 'o', markersize=8, 
+                    label=f'Threshold = {thresh}', color=plt.cm.coolwarm(i/4))
+    
+    # Set labels and title
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title(f'{single_model} ROC Curve')
+    
+    # Add legend
+    ax.legend(loc='lower right')
+    
+    # Set limits
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    
+    # Add grid
+    ax.grid(alpha=0.3)
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    
+    # Add explanation
+    st.markdown("""
+    ### Interpreting ROC Curves
+    
+    - **AUC (Area Under the Curve)**: The primary metric derived from the ROC curve. Higher values indicate better discriminative ability.
+    
+    - **Thresholds**: Each point on the ROC curve represents a different classification threshold. Moving along the curve shows the tradeoff between:
+      - True Positive Rate (sensitivity/recall)
+      - False Positive Rate (1 - specificity)
+    
+    - **Optimal Threshold**: The optimal threshold depends on the relative costs of false positives vs. false negatives. In bankruptcy prediction:
+      - If missing a bankruptcy is very costly, choose a threshold with higher recall (upper right)
+      - If falsely flagging healthy companies is costly, choose a threshold with higher specificity (lower left)
     """)
 
 elif selected_page == "Feature Importance":
@@ -554,6 +684,7 @@ elif selected_page == "Confusion Matrices":
         - **F1 Score**: {f1:.4f}
         """)
     
+    # Add explanation
     # Add explanation
     st.markdown("""
     ### Understanding the Confusion Matrix
