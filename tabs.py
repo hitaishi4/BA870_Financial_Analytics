@@ -3,7 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
-    roc_curve, auc, confusion_matrix, classification_report
+    roc_curve, auc, confusion_matrix, classification_report,
+    accuracy_score, precision_score, recall_score, f1_score
 )
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -40,6 +41,8 @@ def split_data(df: pd.DataFrame, target_col: str, test_size: float = 0.3, random
 
 # 2. Modeling utilities
 def train_models(X_train, y_train) -> dict:
+    # Ensure numeric only and fill missing
+    X_train = X_train.select_dtypes(include=['number']).fillna(0)
     models = {
         "Decision Tree": DecisionTreeClassifier(),
         "Random Forest": RandomForestClassifier(n_estimators=100),
@@ -56,6 +59,8 @@ def train_models(X_train, y_train) -> dict:
     return pipelines
 
 def get_metrics(pipelines: dict, X_test, y_test) -> dict:
+    # Ensure numeric only and fill missing
+    X_test = X_test.select_dtypes(include=['number']).fillna(0)
     results = {}
     for name, pipe in pipelines.items():
         y_pred = pipe.predict(X_test)
@@ -64,7 +69,15 @@ def get_metrics(pipelines: dict, X_test, y_test) -> dict:
         auc_score = auc(fpr, tpr)
         cm = confusion_matrix(y_test, y_pred)
         cr = classification_report(y_test, y_pred, output_dict=True)
+        acc = accuracy_score(y_test, y_pred)
+        prec = precision_score(y_test, y_pred)
+        rec = recall_score(y_test, y_pred)
+        f1 = f1_score(y_test, y_pred)
         results[name] = {
+            "accuracy": acc,
+            "precision": prec,
+            "recall": rec,
+            "f1": f1,
             "fpr": fpr,
             "tpr": tpr,
             "auc": auc_score,
@@ -73,34 +86,27 @@ def get_metrics(pipelines: dict, X_test, y_test) -> dict:
         }
     return results
 
-def get_feature_importances(pipelines: dict, feature_names: list) -> dict:
-    imps = {}
-    for name in ["Decision Tree", "Random Forest", "Gradient Boosting"]:
-        pipe = pipelines.get(name)
-        if hasattr(pipe.named_steps["clf"], "feature_importances_"):
-            imps[name] = pd.Series(
-                pipe.named_steps["clf"].feature_importances_, index=feature_names
-            ).sort_values(ascending=False)
-    return imps
-
-def get_permutation_importances(pipelines: dict, X_test, y_test, feature_names: list) -> dict:
-    perm_imps = {}
-    for name, pipe in pipelines.items():
-        r = permutation_importance(pipe, X_test, y_test, n_repeats=10, random_state=42)
-        perm_imps[name] = pd.Series(r.importances_mean, index=feature_names).sort_values(ascending=False)
-    return perm_imps
-
 # 3. Tab views
 def show_overview_tab(df: pd.DataFrame):
     st.subheader("Dataset Overview")
     st.write(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
     st.subheader("Features")
-    st.write(", ".join(df.columns))
+    st.write(", ".join(df.drop(columns=["status_label"]).columns))
 
 def show_training_tab(results: dict):
-    st.subheader("Training AUC Scores")
-    for name, r in results.items():
-        st.write(f"{name}: {r['auc']:.3f}")
+    st.subheader("Model Performance Metrics")
+    df_metrics = pd.DataFrame({
+        name: {
+            "Accuracy": r["accuracy"],
+            "Precision": r["precision"],
+            "Recall": r["recall"],
+            "F1 Score": r["f1"],
+            "AUC": r["auc"]
+        }
+        for name, r in results.items()
+    }).T
+    df_metrics = df_metrics.applymap(lambda x: f"{x:.3f}")
+    st.dataframe(df_metrics)
 
 def show_comparison_tab(results: dict):
     st.subheader("Model AUC Comparison")
@@ -132,7 +138,8 @@ def show_confusion_tab(results: dict):
         ax.imshow(cm, interpolation="nearest", cmap="Blues")
         ax.set_title(name)
         ax.set_xticks([0,1]); ax.set_yticks([0,1])
-        ax.set_xticklabels(["Alive","Bankrupt"]); ax.set_yticklabels(["Alive","Bankrupt"])
+        ax.set_xticklabels(["Alive","Bankrupt"])
+        ax.set_yticklabels(["Alive","Bankrupt"])
         thresh = cm.max() / 2
         for i in range(cm.shape[0]):
             for j in range(cm.shape[1]):
