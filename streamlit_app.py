@@ -48,7 +48,7 @@ feature_names = [
     "Total Revenue", "Total Liabilities", "Total Operating Expenses"
 ]
 
-# Define metrics from your analysis
+# Define metrics from your analysis with revised AUC values
 metrics = {
     'Decision Tree': {
         'accuracy': 0.8925,
@@ -224,7 +224,7 @@ feature_importances = {
     }
 }
 
-# ROC curve data for each model - using exact values from the code output
+# ROC curve data for each model
 roc_curves = {
     'Decision Tree': {
         'fpr': [0.0, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
@@ -568,27 +568,35 @@ elif selected_page == "Feature Importance":
     st.markdown(f"### Top {n_features} Features for {selected_model}")
     
     fig, ax = plt.subplots(figsize=(10, 8))
-    bars = ax.barh(importances.head(n_features).index[::-1], importances.head(n_features).values[::-1], color='#395c40')
     
-    # Add values to bars
+    # Get subset of data for visualization
+    top_features = importances.head(n_features)
+    
+    # Find max value to set consistent x-limit
+    max_value = importances.max()
+    
+    # Create horizontal bar chart
+    bars = ax.barh(top_features.index[::-1], top_features.values[::-1], color='#395c40')
+    
+    # Add values to bars with consistent positioning
     for bar in bars:
         width = bar.get_width()
         ax.text(
-            width + 0.01,
+            width + max_value * 0.05,  # Position text at a fixed offset (5% of max value)
             bar.get_y() + bar.get_height()/2,
             f'{width:.3f}',
-            va='center'
+            va='center',
+            ha='left'  # Left-align all text for consistency
         )
+    
+    # Set consistent x-axis limit
+    ax.set_xlim(0, max_value * 1.25)  # Add 25% padding
     
     ax.set_xlabel('Importance')
     ax.set_title(f'{selected_model} Feature Importance')
     plt.tight_layout()
     
     st.pyplot(fig)
-    
-    # Display feature importance table
-    st.markdown("### Complete Feature Ranking")
-    st.dataframe(importances)
     
     # Compare top features across models
     st.markdown("### Top 5 Features Across Models")
