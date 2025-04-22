@@ -2,20 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import (
-    roc_curve, auc, confusion_matrix,
-    classification_report, accuracy_score,
-    precision_score, recall_score, f1_score
-)
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-import io
-import base64
 
 # Page configuration
 st.set_page_config(
@@ -474,41 +460,85 @@ elif selected_page == "Confusion Matrices":
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
     
-    # Display confusion matrix
+    # Display confusion matrix in a simpler way without using matplotlib's colormap
     st.markdown(f"### {selected_model} Confusion Matrix")
     
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        fig, ax = plt.subplots(figsize=(8, 6))
-        im = ax.imshow(cm, interpolation='nearest', cmap='Blues')
+        # Use st.dataframe for confusion matrix display
+        cm_df = pd.DataFrame(
+            cm,
+            index=['Actual Alive', 'Actual Bankrupt'],
+            columns=['Predicted Alive', 'Predicted Bankrupt']
+        )
         
-        # Add labels
-        ax.set_xlabel('Predicted label', fontsize=12)
-        ax.set_ylabel('True label', fontsize=12)
-        ax.set_title(f'{selected_model} Confusion Matrix', fontsize=14)
+        st.dataframe(cm_df)
         
-        # Add class labels
-        ax.set_xticks([0, 1])
-        ax.set_yticks([0, 1])
-        ax.set_xticklabels(['Alive', 'Bankrupt'])
-        ax.set_yticklabels(['Alive', 'Bankrupt'])
+        # Create a simplified visualization
+        st.markdown("### Visual Representation")
         
-        # Add colorbar
-        plt.colorbar(im)
+        # Convert to percentages for better comparison
+        cm_pct = np.zeros((2, 2))
+        cm_pct[0, 0] = 100 * tn / (tn + fp) if (tn + fp) > 0 else 0  # TN as % of actual alive
+        cm_pct[0, 1] = 100 * fp / (tn + fp) if (tn + fp) > 0 else 0  # FP as % of actual alive
+        cm_pct[1, 0] = 100 * fn / (fn + tp) if (fn + tp) > 0 else 0  # FN as % of actual bankrupt
+        cm_pct[1, 1] = 100 * tp / (fn + tp) if (fn + tp) > 0 else 0  # TP as % of actual bankrupt
         
-        # Add text annotations - FIXED CODE HERE
-        # Calculate threshold for text color
-        thresh = cm.max() / 2.0
-        for i in range(2):
-            for j in range(2):
-                ax.text(j, i, f'{cm[i][j]}',
-                      ha="center", va="center",
-                      color="white" if cm[i][j] > thresh else "black",
-                      fontsize=12)
-        
-        plt.tight_layout()
-        st.pyplot(fig)
+        # Create a simple visualization using colored text
+        html = f"""
+        <style>
+        .cm-box {{
+            padding: 20px;
+            text-align: center;
+            margin: 5px;
+            font-weight: bold;
+            color: white;
+        }}
+        .box-container {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }}
+        .tn {{
+            background-color: rgba(57, 92, 64, 0.8);
+        }}
+        .fp {{
+            background-color: rgba(166, 54, 3, 0.8);
+        }}
+        .fn {{
+            background-color: rgba(166, 54, 3, 0.8);
+        }}
+        .tp {{
+            background-color: rgba(57, 92, 64, 0.8);
+        }}
+        </style>
+        <div class="box-container">
+            <div class="cm-box tn">
+                True Negative<br>
+                {tn} instances<br>
+                ({cm_pct[0, 0]:.1f}% of actual alive)
+            </div>
+            <div class="cm-box fp">
+                False Positive<br>
+                {fp} instances<br>
+                ({cm_pct[0, 1]:.1f}% of actual alive)
+            </div>
+            <div class="cm-box fn">
+                False Negative<br>
+                {fn} instances<br>
+                ({cm_pct[1, 0]:.1f}% of actual bankrupt)
+            </div>
+            <div class="cm-box tp">
+                True Positive<br>
+                {tp} instances<br>
+                ({cm_pct[1, 1]:.1f}% of actual bankrupt)
+            </div>
+        </div>
+        """
+        st.markdown(html, unsafe_allow_html=True)
     
     with col2:
         st.markdown("### Metrics")
