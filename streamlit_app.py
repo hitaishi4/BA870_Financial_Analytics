@@ -88,10 +88,10 @@ rename_map = {
     "X18": "Total Operating Expenses"
 }
 
-# Improved data loading function with better error handling and debug information
-@st.cache_data
+# Improved data loading function with completely suppressed error messages
+@st.cache_data(show_spinner=False)
 def load_data():
-    """Load data with multiple fallback paths and detailed error reporting"""
+    """Load data with multiple fallback paths and silent error handling"""
     # List of possible file paths to try
     possible_paths = [
         'data/american_bankruptcy.csv',  # Default path in GitHub repo
@@ -100,21 +100,16 @@ def load_data():
         './american_bankruptcy.csv',     # Explicit current directory
     ]
     
-    # Try each path
+    # Try each path silently without any visible messages
     for path in possible_paths:
         try:
-            st.sidebar.info(f"Trying to load from: {path}")
             if os.path.exists(path):
                 df = pd.read_csv(path)
-                st.sidebar.success(f"✅ Data loaded successfully from {path}")
                 
                 # Handle status/bankruptcy column - check for various possible column names
                 if "status_label" in df.columns:
-                    # Check values in status_label to determine appropriate mapping
-                    status_values = df['status_label'].unique()
-                    st.sidebar.info(f"Status values found: {', '.join(status_values)}")
-                    
                     # Map according to the values found
+                    status_values = df['status_label'].unique()
                     if 'failed' in status_values:
                         df['Bankrupt'] = df['status_label'].map({'failed': 1, 'alive': 0})
                     elif 'Bankrupt' in status_values:
@@ -124,27 +119,20 @@ def load_data():
                         df['Bankrupt'] = df['status_label'].apply(
                             lambda x: 1 if x.lower() in ['failed', 'bankrupt', 'distress', 'default'] else 0
                         )
-                    
-                    st.sidebar.success("✅ Converted status_label to Bankrupt column")
                 
                 # Also check for Bankruptcy column and rename to Bankrupt if needed
                 if "Bankruptcy" in df.columns and "Bankrupt" not in df.columns:
                     df['Bankrupt'] = df['Bankruptcy']
-                    st.sidebar.success("✅ Renamed Bankruptcy column to Bankrupt")
                 
                 # Rename X1-X18 columns to descriptive names if they exist
                 if "X1" in df.columns:
                     df = df.rename(columns=rename_map)
-                    st.sidebar.success("✅ Renamed X1-X18 columns to descriptive names")
                 
                 return df
-        except Exception as e:
-            st.sidebar.error(f"Error loading file: {str(e)}")
+        except Exception:
             continue
     
-    # If we reach here, all paths failed
-    st.sidebar.error("❌ Failed to load data from any location.")
-    st.error("Could not load the data file. Please check that the file exists in the specified locations.")
+    # If we reach here, all paths failed - return empty DataFrame without error messages
     return pd.DataFrame()  # Return empty DataFrame if all paths fail
 
 # Load the data but suppress debug information in the UI
