@@ -535,10 +535,13 @@ if selected_page == "Overview":
 if selected_page == "Overview":
     st.markdown('<p class="sub-header">Overview</p>', unsafe_allow_html=True)
     
+    # Project Summary using a simple string with explicit triple quotes
     st.markdown("""
     ### Project Summary
     
-    This project uses the Kaggle American Companies Bankruptcy Prediction dataset (financial data from 1999-2018 for ~8,000 US public companies) to train a machine learning model that predicts bankruptcy filings. Our app showcases the model's predictions and performance metrics, highlights key financial features, and allows users to explore what-if scenarios. """)
+    This project uses the Kaggle American Companies Bankruptcy Prediction dataset (financial data from 1999-2018 for ~8,000 US public companies) to train a machine learning model that predicts bankruptcy filings. Our app showcases the model's predictions and performance metrics, highlights key financial features, and allows users to explore what-if scenarios.
+    """)
+    
     ### Methodology
     
     - **Training Data**: Financial data from 1999-2011
