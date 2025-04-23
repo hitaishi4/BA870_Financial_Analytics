@@ -12,13 +12,22 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Apply custom CSS
+# Apply custom CSS with updated styles
 st.markdown("""
 <style>
 .main-header {
     font-size: 2.5rem;
     font-weight: bold;
     color: #395c40;
+    text-align: center;
+    padding-bottom: 20px;
+}
+.page-header {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #395c40;
+    text-align: center;
+    padding-bottom: 15px;
 }
 .sub-header {
     font-size: 1.5rem;
@@ -29,16 +38,17 @@ st.markdown("""
     font-size: 1.2rem;
     font-weight: bold;
 }
+/* Improve table text visibility */
+table {
+    color: black !important;
+    font-weight: 500 !important;
+}
+th {
+    color: black !important;
+    font-weight: 700 !important;
+}
 </style>
 """, unsafe_allow_html=True)
-
-# App title and introduction
-st.markdown('<p class="main-header">Bankruptcy Prediction Dashboard</p>', unsafe_allow_html=True)
-
-st.markdown("""
-This dashboard presents a comprehensive analysis of bankruptcy prediction models using financial data 
-from American companies. The analysis compares multiple machine learning models and their performance metrics.
-""")
 
 # Define column renaming mapping
 rename_map = {
@@ -439,6 +449,15 @@ st.sidebar.title("Navigation")
 pages = ["Overview", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices", "Z-Score Analysis"]
 selected_page = st.sidebar.radio("Go to", pages)
 
+# Show main header and introduction only on the overview page
+if selected_page == "Overview":
+    st.markdown('<p class="main-header">Bankruptcy Prediction Dashboard</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    This dashboard presents a comprehensive analysis of bankruptcy prediction models using financial data 
+    from American companies. The analysis compares multiple machine learning models and their performance metrics.
+    """)
+
 # Render the selected page
 if selected_page == "Overview":
     st.markdown('<p class="sub-header">Overview</p>', unsafe_allow_html=True)
@@ -446,8 +465,7 @@ if selected_page == "Overview":
     st.markdown("""
     ### Project Summary
     
-    This dashboard presents the results of a bankruptcy prediction analysis using financial data
-    from American companies. The dataset includes 18 financial features and spans multiple years.
+    This project uses the Kaggle American Companies Bankruptcy Prediction dataset (financial data from 1999–2018 for ~8,000 US public companies) to train a machine learning model that predicts bankruptcy filings. Our app showcases the model's predictions and performance metrics, highlights key financial features, and allows users to explore what-if scenarios.
     
     ### Methodology
     
@@ -575,17 +593,18 @@ if selected_page == "Overview":
             bankruptcy_counts.columns = ['Status', 'Count']
             bankruptcy_counts['Status'] = bankruptcy_counts['Status'].map({1: 'Bankrupt', 0: 'Healthy'})
             
-            # Create a pie chart
+            # Create a pie chart with updated colors (green for healthy, red for bankrupt)
             fig, ax = plt.subplots(figsize=(8, 6))
             ax.pie(bankruptcy_counts['Count'], labels=bankruptcy_counts['Status'], 
-                   autopct='%1.1f%%', startangle=90, colors=['#a63603', '#395c40'])
+                   autopct='%1.1f%%', startangle=90, colors=['#395c40', '#a63603'])
             ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
             plt.title('Distribution of Bankruptcy Status')
             
             st.pyplot(fig)
 
 elif selected_page == "Model Comparison":
-    st.markdown('<p class="sub-header">Model Performance Comparison</p>', unsafe_allow_html=True)
+    # Show page header with new centered style
+    st.markdown('<p class="page-header">Model Performance Comparison</p>', unsafe_allow_html=True)
     
     # Create metrics dataframe
     metrics_df = pd.DataFrame({
@@ -668,7 +687,8 @@ elif selected_page == "Model Comparison":
     """)
 
 elif selected_page == "ROC Curves":
-    st.markdown('<p class="sub-header">ROC Curve Analysis</p>', unsafe_allow_html=True)
+    # Show page header with new centered style
+    st.markdown('<p class="page-header">ROC Curve Analysis</p>', unsafe_allow_html=True)
     
     st.markdown("""
     ### What are ROC Curves?
@@ -777,7 +797,8 @@ elif selected_page == "ROC Curves":
     """)
 
 elif selected_page == "Feature Importance":
-    st.markdown('<p class="sub-header">Feature Importance Analysis</p>', unsafe_allow_html=True)
+    # Show page header with new centered style
+    st.markdown('<p class="page-header">Feature Importance Analysis</p>', unsafe_allow_html=True)
     
     # Select model for feature importance
     model_options = ["Decision Tree", "Gradient Boosting", "Random Forest", "Logistic Regression", "KNN", "SVM"]
@@ -860,7 +881,8 @@ elif selected_page == "Feature Importance":
     """)
 
 elif selected_page == "Confusion Matrices":
-    st.markdown('<p class="sub-header">Confusion Matrix Analysis</p>', unsafe_allow_html=True)
+    # Show page header with new centered style
+    st.markdown('<p class="page-header">Confusion Matrix Analysis</p>', unsafe_allow_html=True)
     
     # Select model for confusion matrix
     model_options = list(metrics.keys())
@@ -1021,7 +1043,8 @@ elif selected_page == "Confusion Matrices":
     """)
 
 elif selected_page == "Z-Score Analysis":
-    st.markdown('<p class="sub-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
+    # Show page header with new centered style
+    st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
     
     st.markdown("""
     ### What is the Altman Z-Score?
