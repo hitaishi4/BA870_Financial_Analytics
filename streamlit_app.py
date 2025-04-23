@@ -411,7 +411,7 @@ def calculate_zscore(df):
             zscore_df['Z-Score'].fillna(mean_zscore, inplace=True)
             st.sidebar.info(f"Filled NaN Z-Scores with mean value: {mean_zscore:.4f}")
         
-        # Classify based on Z-Score - allow customization of thresholds
+        # Classify based on Z-Score with default thresholds
         distress_threshold = 1.8  # Default distress threshold
         safe_threshold = 2.99     # Default safe threshold
         
@@ -451,10 +451,10 @@ if selected_page == "Overview":
     
     ### Methodology
     
-    - *Training Data*: Financial data from 1999-2011
-    - *Testing Data*: Financial data from 2015-2018
-    - *Features*: 18 financial indicators including Current Assets, Net Income, EBITDA, etc.
-    - *Target Variable*: Binary classification (Bankrupt vs Alive)
+    - **Training Data**: Financial data from 1999-2011
+    - **Testing Data**: Financial data from 2015-2018
+    - **Features**: 18 financial indicators including Current Assets, Net Income, EBITDA, etc.
+    - **Target Variable**: Binary classification (Bankrupt vs Alive)
     
     ### Models Analyzed
     
@@ -505,9 +505,9 @@ if selected_page == "Overview":
     
     st.markdown("### Quick insights")
     st.markdown(f"""
-    - The model with the best overall performance is *{metrics_df['AUC'].idxmax()}* with an AUC of {metrics_df['AUC'].max():.3f}
-    - For identifying bankruptcies (recall), *{metrics_df['Recall'].idxmax()}* performs best with a recall of {metrics_df['Recall'].max():.3f}
-    - The highest precision is achieved by *{metrics_df['Precision'].idxmax()}* at {metrics_df['Precision'].max():.3f}
+    - The model with the best overall performance is **{metrics_df['AUC'].idxmax()}** with an AUC of {metrics_df['AUC'].max():.3f}
+    - For identifying bankruptcies (recall), **{metrics_df['Recall'].idxmax()}** performs best with a recall of {metrics_df['Recall'].max():.3f}
+    - The highest precision is achieved by **{metrics_df['Precision'].idxmax()}** at {metrics_df['Precision'].max():.3f}
     """)
 
     # Plot AUC comparison
@@ -646,21 +646,21 @@ elif selected_page == "Model Comparison":
     st.markdown("""
     ### Understanding the Metrics
     
-    - *Accuracy*: The ratio of correctly predicted instances to the total instances. High accuracy can be misleading with imbalanced classes.
+    - **Accuracy**: The ratio of correctly predicted instances to the total instances. High accuracy can be misleading with imbalanced classes.
     
-    - *Precision*: The ratio of correctly predicted positive instances to the total predicted positive instances. High precision means low false positive rate.
+    - **Precision**: The ratio of correctly predicted positive instances to the total predicted positive instances. High precision means low false positive rate.
     
-    - *Recall*: The ratio of correctly predicted positive instances to all actual positive instances. High recall means the model captures most bankruptcies.
+    - **Recall**: The ratio of correctly predicted positive instances to all actual positive instances. High recall means the model captures most bankruptcies.
     
-    - *F1 Score*: The harmonic mean of precision and recall. It's a good metric when you need to balance precision and recall.
+    - **F1 Score**: The harmonic mean of precision and recall. It's a good metric when you need to balance precision and recall.
     
-    - *AUC*: Area Under the ROC Curve. Measures the model's ability to distinguish between classes. Higher values indicate better performance.
+    - **AUC**: Area Under the ROC Curve. Measures the model's ability to distinguish between classes. Higher values indicate better performance.
     """)
     
     # Class imbalance information
     st.markdown("### Class Imbalance")
     st.info("""
-    *Note on Class Imbalance*: The dataset has a significant class imbalance with many more 'alive' companies than 'bankrupt' ones. 
+    **Note on Class Imbalance**: The dataset has a significant class imbalance with many more 'alive' companies than 'bankrupt' ones. 
     This imbalance affects metrics like accuracy, which can be high even when the model performs poorly on the minority class.
     
     For bankruptcy prediction, recall is particularly important as the cost of missing a bankruptcy (false negative) is typically higher 
@@ -765,13 +765,13 @@ elif selected_page == "ROC Curves":
     st.markdown("""
     ### Interpreting ROC Curves
     
-    - *AUC (Area Under the Curve)*: The primary metric derived from the ROC curve. Higher values indicate better discriminative ability.
+    - **AUC (Area Under the Curve)**: The primary metric derived from the ROC curve. Higher values indicate better discriminative ability.
     
-    - *Thresholds*: Each point on the ROC curve represents a different classification threshold. Moving along the curve shows the tradeoff between:
+    - **Thresholds**: Each point on the ROC curve represents a different classification threshold. Moving along the curve shows the tradeoff between:
       - True Positive Rate (sensitivity/recall)
       - False Positive Rate (1 - specificity)
     
-    - *Optimal Threshold*: The optimal threshold depends on the relative costs of false positives vs. false negatives. In bankruptcy prediction:
+    - **Optimal Threshold**: The optimal threshold depends on the relative costs of false positives vs. false negatives. In bankruptcy prediction:
       - If missing a bankruptcy is very costly, choose a threshold with higher recall (upper right)
       - If falsely flagging healthy companies is costly, choose a threshold with higher specificity (lower left)
     """)
@@ -844,13 +844,13 @@ elif selected_page == "Feature Importance":
     
     Different models calculate feature importance in different ways:
     
-    - *Decision Tree*: Based on the total reduction of impurity (e.g., Gini impurity) contributed by each feature
+    - **Decision Tree**: Based on the total reduction of impurity (e.g., Gini impurity) contributed by each feature
     
-    - *Gradient Boosting & Random Forest*: Based on the average reduction in impurity across all trees
+    - **Gradient Boosting & Random Forest**: Based on the average reduction in impurity across all trees
     
-    - *Logistic Regression*: Based on the absolute values of the coefficients (larger coefficient = more important)
+    - **Logistic Regression**: Based on the absolute values of the coefficients (larger coefficient = more important)
     
-    - *KNN & SVM*: Based on permutation importance - how much the model's performance decreases when the feature values are randomly shuffled
+    - **KNN & SVM**: Based on permutation importance - how much the model's performance decreases when the feature values are randomly shuffled
     
     For bankruptcy prediction, important features typically include financial ratios and indicators that capture:
     - Profitability (Net Income, EBITDA)
@@ -962,29 +962,29 @@ elif selected_page == "Confusion Matrices":
     with col2:
         st.markdown("### Metrics")
         st.markdown(f"""
-        - *True Negatives (TN)*: {tn}
-        - *False Positives (FP)*: {fp}
-        - *False Negatives (FN)*: {fn}
-        - *True Positives (TP)*: {tp}
+        - **True Negatives (TN)**: {tn}
+        - **False Positives (FP)**: {fp}
+        - **False Negatives (FN)**: {fn}
+        - **True Positives (TP)**: {tp}
         
-        - *Accuracy*: {accuracy:.4f}
-        - *Precision*: {precision:.4f}
-        - *Recall*: {recall:.4f}
-        - *F1 Score*: {f1:.4f}
+        - **Accuracy**: {accuracy:.4f}
+        - **Precision**: {precision:.4f}
+        - **Recall**: {recall:.4f}
+        - **F1 Score**: {f1:.4f}
         """)
     
     # Add explanation
     st.markdown("""
     ### Understanding the Confusion Matrix
     
-    - *True Negatives (TN)*: Companies correctly predicted as alive
-    - *False Positives (FP)*: Companies incorrectly predicted as bankrupt
-    - *False Negatives (FN)*: Bankrupt companies incorrectly predicted as alive
-    - *True Positives (TP)*: Companies correctly predicted as bankrupt
+    - **True Negatives (TN)**: Companies correctly predicted as alive
+    - **False Positives (FP)**: Companies incorrectly predicted as bankrupt
+    - **False Negatives (FN)**: Bankrupt companies incorrectly predicted as alive
+    - **True Positives (TP)**: Companies correctly predicted as bankrupt
     
     In bankruptcy prediction:
-    - *False Negatives* are particularly costly (missed bankruptcies)
-    - *False Positives* can also be problematic (incorrectly flagging healthy companies)
+    - **False Negatives** are particularly costly (missed bankruptcies)
+    - **False Positives** can also be problematic (incorrectly flagging healthy companies)
     
     The ideal model would maximize True Positives while minimizing False Negatives.
     """)
@@ -1015,7 +1015,7 @@ elif selected_page == "Confusion Matrices":
     
     # Add interpretation
     st.info("""
-    *Note*: A higher detection rate (recall) means the model identifies more bankruptcies, but this often comes
+    **Note**: A higher detection rate (recall) means the model identifies more bankruptcies, but this often comes
     at the cost of more false alarms. The Decision Tree has the highest bankruptcy detection rate but also the highest
     false alarm rate, while SVM has the lowest false alarm rate but also the lowest detection rate.
     """)
@@ -1029,7 +1029,7 @@ elif selected_page == "Z-Score Analysis":
     The Altman Z-Score is a financial formula developed by Edward Altman in 1968 to predict the probability of a company going bankrupt. 
     It combines multiple financial ratios into a single score that helps assess a company's financial health.
     
-    *Original Z-score formula:*
+    **Original Z-score formula:**
     
     Z = 1.2*T1 + 1.4*T2 + 3.3*T3 + 0.6*T4 + 0.99*T5
     
@@ -1066,50 +1066,45 @@ elif selected_page == "Z-Score Analysis":
                 st.write("\nExpected mapping from X1-X18:")
                 mapping_df = pd.DataFrame(list(rename_map.items()), columns=["Original", "Expected"])
                 st.dataframe(mapping_df)
-        else:
-            # Allow user to adjust Z-Score thresholds
-            st.markdown("### Z-Score Threshold Settings")
-            with st.expander("Adjust Z-Score Thresholds"):
-                col1, col2 = st.columns(2)
-                with col1:
-                    distress_threshold = st.slider("Distress Threshold", 
-                                                  min_value=0.5, 
-                                                  max_value=3.0, 
-                                                  value=1.8, 
-                                                  step=0.1,
-                                                  help="Companies with Z-Score below this value are classified as 'Distress'")
-                with col2:
-                    safe_threshold = st.slider("Safe Threshold", 
-                                              min_value=distress_threshold + 0.1, 
-                                              max_value=5.0, 
-                                              value=2.99, 
-                                              step=0.1,
-                                              help="Companies with Z-Score above this value are classified as 'Safe'")
-            
+        else:            
             # Display bankruptcy status distribution in the data
             if 'Bankrupt' in data.columns:
                 st.markdown("### Bankruptcy Status in Dataset")
                 bankrupt_count = data['Bankrupt'].sum()
                 alive_count = len(data) - bankrupt_count
                 
-                # Create a bar chart
-                fig, ax = plt.subplots(figsize=(8, 4))
-                ax.bar(['Alive', 'Bankrupt'], [alive_count, bankrupt_count], color=['#395c40', '#a63603'])
+                # Create a bar chart with improved spacing for the count numbers
+                fig, ax = plt.subplots(figsize=(8, 5))
+                bars = ax.bar(['Alive', 'Bankrupt'], [alive_count, bankrupt_count], color=['#395c40', '#a63603'])
+                
+                # Add count labels with more space above and below
+                ax.set_ylim(0, max(alive_count, bankrupt_count) * 1.15)  # Add 15% more space at the top
+                for i, bar in enumerate(bars):
+                    height = bar.get_height()
+                    ax.text(
+                        bar.get_x() + bar.get_width()/2,
+                        height * 1.05,  # Position text higher above the bar
+                        f"{height:,}",  # Format with commas for thousands
+                        ha='center',
+                        va='bottom',
+                        fontsize=14,  # Larger font size
+                        fontweight='bold'  # Bold text
+                    )
+                
                 ax.set_ylabel('Number of Companies')
-                for i, v in enumerate([alive_count, bankrupt_count]):
-                    ax.text(i, v + 0.1, str(v), ha='center')
+                plt.tight_layout()
                 st.pyplot(fig)
                 
                 # Calculate percentage
                 bankrupt_pct = 100 * bankrupt_count / len(data)
-                st.info(f"*Bankruptcy Rate*: {bankrupt_pct:.2f}% ({bankrupt_count} out of {len(data)} companies)")
+                st.info(f"**Bankruptcy Rate**: {bankrupt_pct:.2f}% ({bankrupt_count:,} out of {len(data):,} companies)")
                 
                 if bankrupt_count == 0:
                     st.warning("⚠️ No bankrupt companies found in the dataset! Please check your 'Bankrupt' column.")
             
-            # Calculate Z-Score with custom thresholds
+            # Calculate Z-Score using default thresholds
             def calculate_custom_zscore():
-                """Calculate Z-Score with custom thresholds"""
+                """Calculate Z-Score with default thresholds"""
                 zscore_df = pd.DataFrame(index=data.index)
                 
                 # T1 = Working Capital / Total Assets
@@ -1140,7 +1135,11 @@ elif selected_page == "Z-Score Analysis":
                 # Fill NaN values with the median Z-Score
                 zscore_df['Z-Score'].fillna(zscore_df['Z-Score'].median(), inplace=True)
                 
-                # Classify based on Z-Score with custom thresholds
+                # Use default thresholds
+                distress_threshold = 1.8
+                safe_threshold = 2.99
+                
+                # Classify based on Z-Score with default thresholds
                 zscore_df['Z-Score Status'] = pd.cut(
                     zscore_df['Z-Score'], 
                     bins=[-float('inf'), distress_threshold, safe_threshold, float('inf')],
@@ -1156,45 +1155,10 @@ elif selected_page == "Z-Score Analysis":
                 
                 return zscore_df
             
-            # Use custom Z-Score calculation
+            # Use Z-Score calculation with default settings
             zscore_df = calculate_custom_zscore()
             
             if not zscore_df.empty:
-                # Display Z-Score distribution
-                st.markdown("### Z-Score Distribution")
-                
-                # Check if actual bankruptcy status is available
-                has_actual_status = 'Actual Status' in zscore_df.columns
-                
-                # Create histogram
-                fig, ax = plt.subplots(figsize=(10, 6))
-                
-                if has_actual_status:
-                    # Split by actual bankruptcy status
-                    z_bankrupt = zscore_df[zscore_df['Actual Status'] == 1]['Z-Score']
-                    z_healthy = zscore_df[zscore_df['Actual Status'] == 0]['Z-Score']
-                    
-                    # Plot histograms
-                    ax.hist(z_healthy, bins=30, alpha=0.7, label='Healthy Companies', color='#395c40')
-                    ax.hist(z_bankrupt, bins=30, alpha=0.7, label='Bankrupt Companies', color='#a63603')
-                else:
-                    # Plot single histogram without status distinction
-                    ax.hist(zscore_df['Z-Score'], bins=30, alpha=0.7, color='#395c40')
-                
-                # Add vertical lines for Z-Score zones with custom thresholds
-                ax.axvline(x=distress_threshold, color='red', linestyle='--', alpha=0.7, 
-                          label=f'Z={distress_threshold:.1f} (Distress Threshold)')
-                ax.axvline(x=safe_threshold, color='green', linestyle='--', alpha=0.7, 
-                          label=f'Z={safe_threshold:.1f} (Safe Threshold)')
-                
-                ax.set_xlabel('Z-Score')
-                ax.set_ylabel('Number of Companies')
-                ax.set_title('Z-Score Distribution')
-                ax.legend()
-                plt.tight_layout()
-                
-                st.pyplot(fig)
-                
                 # Show Z-Score statistics
                 with st.expander("Z-Score Statistics"):
                     st.write(f"Mean Z-Score: {zscore_df['Z-Score'].mean():.4f}")
@@ -1206,10 +1170,10 @@ elif selected_page == "Z-Score Analysis":
                     zone_counts = zscore_df['Z-Score Status'].value_counts()
                     st.write("Companies in each zone:")
                     for zone in zone_counts.index:
-                        st.write(f"- {zone}: {zone_counts[zone]} companies")
+                        st.write(f"- {zone}: {zone_counts[zone]:,} companies")
                 
                 # Calculate Z-Score performance metrics
-                if has_actual_status:
+                if 'Actual Status' in zscore_df.columns:
                     z_pred = zscore_df['Z-Score Prediction'].values
                     z_actual = zscore_df['Actual Status'].values
                     
@@ -1293,22 +1257,22 @@ elif selected_page == "Z-Score Analysis":
                         <div class="box-container">
                             <div class="cm-box tn">
                                 True Negative<br>
-                                {z_tn} instances<br>
+                                {z_tn:,} instances<br>
                                 ({cm_pct[0, 0]:.1f}% of actual alive)
                             </div>
                             <div class="cm-box fp">
                                 False Positive<br>
-                                {z_fp} instances<br>
+                                {z_fp:,} instances<br>
                                 ({cm_pct[0, 1]:.1f}% of actual alive)
                             </div>
                             <div class="cm-box fn">
                                 False Negative<br>
-                                {z_fn} instances<br>
+                                {z_fn:,} instances<br>
                                 ({cm_pct[1, 0]:.1f}% of actual bankrupt)
                             </div>
                             <div class="cm-box tp">
                                 True Positive<br>
-                                {z_tp} instances<br>
+                                {z_tp:,} instances<br>
                                 ({cm_pct[1, 1]:.1f}% of actual bankrupt)
                             </div>
                         </div>
@@ -1318,15 +1282,15 @@ elif selected_page == "Z-Score Analysis":
                     with col2:
                         st.markdown("### Z-Score Metrics")
                         st.markdown(f"""
-                        - *True Negatives (TN)*: {z_tn}
-                        - *False Positives (FP)*: {z_fp}
-                        - *False Negatives (FN)*: {z_fn}
-                        - *True Positives (TP)*: {z_tp}
+                        - **True Negatives (TN)**: {z_tn:,}
+                        - **False Positives (FP)**: {z_fp:,}
+                        - **False Negatives (FN)**: {z_fn:,}
+                        - **True Positives (TP)**: {z_tp:,}
                         
-                        - *Accuracy*: {z_accuracy:.4f}
-                        - *Precision*: {z_precision:.4f}
-                        - *Recall*: {z_recall:.4f}
-                        - *F1 Score*: {z_f1:.4f}
+                        - **Accuracy**: {z_accuracy:.4f}
+                        - **Precision**: {z_precision:.4f}
+                        - **Recall**: {z_recall:.4f}
+                        - **F1 Score**: {z_f1:.4f}
                         """)
                     
                     # Provide diagnostic information and recommendations
@@ -1344,7 +1308,6 @@ elif selected_page == "Z-Score Analysis":
                         
                         elif z_tp == 0 and z_fn > 0:
                             st.warning("⚠️ Z-Score is not identifying any bankruptcies correctly.")
-                            st.info("Try adjusting the distress threshold. Current threshold might be too low.")
                             
                             # Get Z-Score statistics for bankrupt companies
                             bankrupt_zscores = zscore_df[zscore_df['Actual Status'] == 1]['Z-Score']
@@ -1353,58 +1316,6 @@ elif selected_page == "Z-Score Analysis":
                             st.write(f"- Median: {bankrupt_zscores.median():.4f}")
                             st.write(f"- Min: {bankrupt_zscores.min():.4f}")
                             st.write(f"- Max: {bankrupt_zscores.max():.4f}")
-                            
-                            # Suggest a new threshold
-                            suggested_threshold = bankrupt_zscores.median() + 0.5
-                            st.write(f"Suggested distress threshold: {suggested_threshold:.2f}")
-                    
-                    # Add ability to customize column mapping
-                    st.markdown("### Customize Z-Score Calculation")
-                    with st.expander("Advanced: Customize Financial Ratio Weights"):
-                        st.write("Modify the Altman Z-Score coefficients to better match your dataset:")
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            t1_weight = st.number_input("T1 Weight (Working Capital/Total Assets)", value=1.2, step=0.1)
-                            t2_weight = st.number_input("T2 Weight (Retained Earnings/Total Assets)", value=1.4, step=0.1)
-                            t3_weight = st.number_input("T3 Weight (EBIT/Total Assets)", value=3.3, step=0.1)
-                        with col2:
-                            t4_weight = st.number_input("T4 Weight (Market Value/Total Liabilities)", value=0.6, step=0.1)
-                            t5_weight = st.number_input("T5 Weight (Sales/Total Assets)", value=0.99, step=0.1)
-                            apply_custom = st.button("Apply Custom Weights")
-                        
-                        if apply_custom:
-                            # Recalculate Z-Score with custom weights
-                            custom_zscore_df = zscore_df.copy()
-                            custom_zscore_df['Z-Score'] = (t1_weight * zscore_df['T1'] + 
-                                                         t2_weight * zscore_df['T2'] + 
-                                                         t3_weight * zscore_df['T3'] + 
-                                                         t4_weight * zscore_df['T4'] + 
-                                                         t5_weight * zscore_df['T5'])
-                            
-                            # Reclassify based on Z-Score with custom thresholds and weights
-                            custom_zscore_df['Z-Score Status'] = pd.cut(
-                                custom_zscore_df['Z-Score'], 
-                                bins=[-float('inf'), distress_threshold, safe_threshold, float('inf')],
-                                labels=['Distress', 'Grey', 'Safe']
-                            )
-                            
-                            # Update prediction
-                            custom_zscore_df['Z-Score Prediction'] = (custom_zscore_df['Z-Score Status'] == 'Distress').astype(int)
-                            
-                            # Calculate metrics with custom weights
-                            z_pred = custom_zscore_df['Z-Score Prediction'].values
-                            z_accuracy = (z_pred == z_actual).mean()
-                            z_precision = (z_pred & z_actual).sum() / z_pred.sum() if z_pred.sum() > 0 else 0
-                            z_recall = (z_pred & z_actual).sum() / z_actual.sum() if z_actual.sum() > 0 else 0
-                            z_f1 = 2 * z_precision * z_recall / (z_precision + z_recall) if (z_precision + z_recall) > 0 else 0
-                            
-                            # Display new metrics
-                            st.success("Custom weights applied!")
-                            st.write(f"New metrics with custom weights:")
-                            st.write(f"- Accuracy: {z_accuracy:.4f}")
-                            st.write(f"- Precision: {z_precision:.4f}")
-                            st.write(f"- Recall: {z_recall:.4f}")
-                            st.write(f"- F1 Score: {z_f1:.4f}")
                 
                 # Add financial insight
                 st.markdown("### Financial Insights")
@@ -1414,22 +1325,22 @@ elif selected_page == "Z-Score Analysis":
                 
                 #### Comparing with Machine Learning Models:
                 
-                - *Interpretability*: Z-Score is easy to interpret and communicate to stakeholders
-                - *Simplicity*: Simple linear combination of 5 financial ratios
-                - *Historical validation*: Well-established method with decades of validation
+                - **Interpretability**: Z-Score is easy to interpret and communicate to stakeholders
+                - **Simplicity**: Simple linear combination of 5 financial ratios
+                - **Historical validation**: Well-established method with decades of validation
                 
                 #### Limitations:
                 
-                - *Static weights*: Uses fixed coefficients that don't adapt to changing economic conditions
-                - *Limited inputs*: Only uses 5 financial ratios, while ML models can incorporate more features
-                - *No industry adjustment*: Same thresholds for all industries, unlike ML models that can learn industry-specific patterns
+                - **Static weights**: Uses fixed coefficients that don't adapt to changing economic conditions
+                - **Limited inputs**: Only uses 5 financial ratios, while ML models can incorporate more features
+                - **No industry adjustment**: Same thresholds for all industries, unlike ML models that can learn industry-specific patterns
                 
                 #### Addressing Common Z-Score Issues:
                 
-                - *Data issues*: Make sure financial data is properly formatted and scaled
-                - *Industry differences*: Consider using different weights for different industries
-                - *Time period mismatch*: Z-Score should be calculated from data prior to bankruptcy
-                - *Threshold adjustment*: Standard thresholds may not work for all datasets, consider adjusting based on your data
+                - **Data issues**: Make sure financial data is properly formatted and scaled
+                - **Industry differences**: Consider using different weights for different industries
+                - **Time period mismatch**: Z-Score should be calculated from data prior to bankruptcy
+                - **Threshold adjustment**: Standard thresholds may not work for all datasets, consider adjusting based on your data
                 """)
             else:
                 st.warning("Could not calculate Z-Score with the available data. Please ensure the dataset contains the necessary financial metrics.")
@@ -1453,4 +1364,4 @@ st.markdown("""
 <div style="text-align: center; color: #888888; font-size: 0.8em;">
 Bankruptcy Prediction Dashboard | Created with Streamlit | Data Analysis Based on Financial Metrics
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True)import streamlit as st
