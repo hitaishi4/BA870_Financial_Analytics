@@ -52,6 +52,28 @@ def load_data():
         './american_bankruptcy.csv',     # Explicit current directory
     ]
     
+    # Define column renaming mapping
+    rename_map = {
+        "X1":  "Current Assets",
+        "X2":  "Cost of Goods Sold",
+        "X3":  "D&A",
+        "X4":  "EBITDA",
+        "X5":  "Inventory",
+        "X6":  "Net Income",
+        "X7":  "Total Receivables",
+        "X8":  "Market Value",
+        "X9":  "Net Sales",
+        "X10": "Total Assets",
+        "X11": "Total Long-term Debt",
+        "X12": "EBIT",
+        "X13": "Gross Profit",
+        "X14": "Total Current Liabilities",
+        "X15": "Retained Earnings",
+        "X16": "Total Revenue",
+        "X17": "Total Liabilities",
+        "X18": "Total Operating Expenses"
+    }
+    
     # Try each path
     for path in possible_paths:
         try:
@@ -59,6 +81,18 @@ def load_data():
             if os.path.exists(path):
                 df = pd.read_csv(path)
                 st.sidebar.success(f"✅ Data loaded successfully from {path}")
+                
+                # Handle status/bankruptcy column
+                if "status_label" in df.columns:
+                    # Convert the status label to binary (assuming 'Bankrupt' is the positive class)
+                    df['Bankrupt'] = df['status_label'].apply(lambda x: 1 if x == 'Bankrupt' else 0)
+                    st.sidebar.info("✅ Converted status_label to Bankrupt column")
+                
+                # Rename X1-X18 columns to descriptive names
+                if "X1" in df.columns:
+                    df = df.rename(columns=rename_map)
+                    st.sidebar.info("✅ Renamed X1-X18 columns to descriptive names")
+                
                 return df
         except Exception as e:
             continue
@@ -463,11 +497,51 @@ if selected_page == "Overview":
     # Display dataset info if data is loaded
     if st.session_state.get('data_loaded', False):
         st.markdown("### Dataset Preview")
-        st.dataframe(data.head())
+        
+        # Create a clean preview of the data
+        preview_data = data.copy()
+        
+        # Filter to only show relevant columns
+        display_cols = []
+        # Keep bankruptcy info
+        if 'status_label' in preview_data.columns:
+            display_cols.append('status_label')
+        if 'Bankrupt' in preview_data.columns:
+            display_cols.append('Bankrupt')
+        if 'year' in preview_data.columns:
+            display_cols.append('year')
+            
+        # Add key financial metrics if available
+        financial_metrics = ['Current Assets', 'Total Assets', 'Net Income', 'EBIT', 'Market Value']
+        for col in financial_metrics:
+            if col in preview_data.columns:
+                display_cols.append(col)
+        
+        # If we have no display columns, just show the first 5
+        if not display_cols and not preview_data.empty:
+            display_cols = preview_data.columns[:5].tolist()
+            
+        # Show the preview with selected columns
+        st.dataframe(preview_data[display_cols].head())
         
         st.markdown("### Dataset Statistics")
         st.write(f"Number of records: {len(data)}")
         st.write(f"Number of features: {len(data.columns)}")
+        
+        # Display bankruptcy distribution if available
+        if 'Bankrupt' in data.columns:
+            bankruptcy_counts = data['Bankrupt'].value_counts().reset_index()
+            bankruptcy_counts.columns = ['Status', 'Count']
+            bankruptcy_counts['Status'] = bankruptcy_counts['Status'].map({1: 'Bankrupt', 0: 'Healthy'})
+            
+            # Create a pie chart
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.pie(bankruptcy_counts['Count'], labels=bankruptcy_counts['Status'], 
+                   autopct='%1.1f%%', startangle=90, colors=['#a63603', '#395c40'])
+            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+            plt.title('Distribution of Bankruptcy Status')
+            
+            st.pyplot(fig)
 
 elif selected_page == "Model Comparison":
     st.markdown('<p class="sub-header">Model Performance Comparison</p>', unsafe_allow_html=True)
@@ -941,7 +1015,16 @@ elif selected_page == "Z-Score Analysis":
         
         if missing_cols:
             st.error(f"Cannot calculate Z-Score: Missing required columns: {', '.join(missing_cols)}")
-            st.warning("Please ensure your data file includes all necessary financial metrics.")
+            st.warning("Please ensure your data file includes all necessary financial metrics or check that column renaming was successful.")
+            
+            # Display current column mapping for debugging
+            with st.expander("Current Column Mapping"):
+                st.write("Your dataset has these columns:")
+                st.write(", ".join(data.columns.tolist()))
+                
+                st.write("\nExpected mapping from X1-X18:")
+                mapping_df = pd.DataFrame(list(rename_map.items()), columns=["Original", "Expected"])
+                st.dataframe(mapping_df)
         else:
             # Calculate Z-Score
             if 'zscore_df' not in st.session_state:
