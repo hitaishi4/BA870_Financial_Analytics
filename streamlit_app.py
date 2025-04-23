@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Apply custom CSS with updated styles
+# Custom CSS for improved navigation styling
 st.markdown("""
 <style>
 .main-header {
@@ -63,6 +63,53 @@ td {
     border: 1px solid #e6e9ef;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+/* Enhanced navigation styling */
+.nav-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+.nav-item {
+    background-color: #f0f2f6;
+    border: 2px solid #e0e2e6;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin: 10px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    min-width: 180px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.nav-item:hover {
+    background-color: #dbeade;
+    border-color: #395c40;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.nav-item.active {
+    background-color: #395c40;
+    color: white;
+    border-color: #395c40;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(57, 92, 64, 0.4);
+}
+/* Handle transitions */
+.main-content {
+    animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+""", unsafe_allow_html=True)
 </style>
 """, unsafe_allow_html=True)
 
@@ -443,10 +490,37 @@ def calculate_zscore(df):
         st.error(f"Error calculating Z-Score. Please check financial data.")
         return pd.DataFrame()
 
-# Sidebar navigation
-st.sidebar.title("Navigation")
+# Sidebar navigation replaced with custom centered navigation
+st.sidebar.title("Other Options")  # Keep sidebar for other options if needed
+
+# Define pages
 pages = ["Overview", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices", "Z-Score Analysis"]
-selected_page = st.sidebar.radio("Go to", pages)
+
+# Create horizontal navigation using HTML
+nav_html = '<div class="nav-container">'
+for page in pages:
+    if page == selected_page:
+        nav_html += f'<div class="nav-item active">{page}</div>'
+    else:
+        nav_html += f'<div class="nav-item">{page}</div>'
+nav_html += '</div>'
+
+# Add session state to manage page transitions
+if 'previous_page' not in st.session_state:
+    st.session_state['previous_page'] = None
+
+# Display navigation
+st.markdown(nav_html, unsafe_allow_html=True)
+
+# Select the page based on clicked navigation items
+selected_page = st.radio("", pages, label_visibility="collapsed")
+
+# Check if page has changed for transition effect
+page_changed = st.session_state['previous_page'] != selected_page
+st.session_state['previous_page'] = selected_page
+
+# Wrap content in div for animation
+st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
 # Show main header and introduction only on the overview page
 if selected_page == "Overview":
@@ -1386,4 +1460,33 @@ st.markdown("""
 <div style="text-align: center; color: #888888; font-size: 0.8em;">
 Bankruptcy Prediction Dashboard | Created with Streamlit | Data Analysis Based on Financial Metrics
 </div>
+""", unsafe_allow_html=True)
+
+# Close main content div for animation
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Add JavaScript for smooth navigation transitions
+st.markdown("""
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Remove active class from all items
+            navItems.forEach(i => i.classList.remove('active'));
+            // Add active class to clicked item
+            this.classList.add('active');
+            
+            // Find the index of the clicked item
+            const pageIndex = Array.from(navItems).indexOf(this);
+            
+            // Find the radio button with the same index and click it
+            const radioInputs = document.querySelectorAll('input[type="radio"]');
+            if (radioInputs[pageIndex]) {
+                radioInputs[pageIndex].click();
+            }
+        });
+    });
+});
+</script>
 """, unsafe_allow_html=True)
