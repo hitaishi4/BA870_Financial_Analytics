@@ -16,62 +16,52 @@ st.set_page_config(
 st.markdown("""
 <style>
 .main-header {
-    font-size: 3rem;
+    font-size: 3rem !important;
+    font-weight: bold;
+    color: #395c40;
+    text-align: center;
+    padding-bottom: 25px;
+}
+.page-header {
+    font-size: 2.8rem !important;
     font-weight: bold;
     color: #395c40;
     text-align: center;
     padding-bottom: 20px;
-}
-.page-header {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #395c40;
-    text-align: center;
-    padding-bottom: 15px;
     margin-top: 20px;
+    margin-bottom: 30px;
 }
 .sub-header {
-    font-size: 1.8rem;
+    font-size: 2rem !important;
     font-weight: bold;
     color: #395c40;
 }
 .section-header {
-    font-size: 1.4rem;
+    font-size: 1.5rem !important;
     font-weight: bold;
 }
-/* Improve table text visibility */
+/* Improve table text visibility - make bold and darker */
 table {
-    color: black !important;
-    font-weight: 500 !important;
-}
-th {
     color: black !important;
     font-weight: 700 !important;
 }
-/* Sidebar navigation styling */
-.sidebar-nav-item {
-    padding: 10px 15px;
-    border-radius: 5px;
-    margin-bottom: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    color: #444;
-    display: block;
-    font-size: 1rem;
+th {
+    color: black !important;
+    font-weight: 900 !important;
 }
-.sidebar-nav-item:hover {
+td {
+    font-weight: 700 !important;
+}
+/* Make all tables more visible */
+.dataframe {
+    font-size: 1.1rem !important;
+}
+.dataframe th {
     background-color: #f0f2f6;
 }
-.sidebar-nav-item-active {
-    background-color: #e6f0ff;
-    color: #1f77b4;
-    font-weight: bold;
-}
-.sidebar-header {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-top: 20px;
-    margin-bottom: 10px;
+.stDataFrame {
+    border: 1px solid #e6e9ef;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -98,10 +88,10 @@ rename_map = {
     "X18": "Total Operating Expenses"
 }
 
-# Improved data loading function with silent error handling
+# Improved data loading function with better error handling and debug information
 @st.cache_data
 def load_data():
-    """Load data with multiple fallback paths but minimal visible messaging"""
+    """Load data with multiple fallback paths and detailed error reporting"""
     # List of possible file paths to try
     possible_paths = [
         'data/american_bankruptcy.csv',  # Default path in GitHub repo
@@ -113,13 +103,16 @@ def load_data():
     # Try each path
     for path in possible_paths:
         try:
+            st.sidebar.info(f"Trying to load from: {path}")
             if os.path.exists(path):
                 df = pd.read_csv(path)
+                st.sidebar.success(f"✅ Data loaded successfully from {path}")
                 
                 # Handle status/bankruptcy column - check for various possible column names
                 if "status_label" in df.columns:
                     # Check values in status_label to determine appropriate mapping
                     status_values = df['status_label'].unique()
+                    st.sidebar.info(f"Status values found: {', '.join(status_values)}")
                     
                     # Map according to the values found
                     if 'failed' in status_values:
@@ -131,40 +124,55 @@ def load_data():
                         df['Bankrupt'] = df['status_label'].apply(
                             lambda x: 1 if x.lower() in ['failed', 'bankrupt', 'distress', 'default'] else 0
                         )
+                    
+                    st.sidebar.success("✅ Converted status_label to Bankrupt column")
                 
                 # Also check for Bankruptcy column and rename to Bankrupt if needed
                 if "Bankruptcy" in df.columns and "Bankrupt" not in df.columns:
                     df['Bankrupt'] = df['Bankruptcy']
+                    st.sidebar.success("✅ Renamed Bankruptcy column to Bankrupt")
                 
                 # Rename X1-X18 columns to descriptive names if they exist
                 if "X1" in df.columns:
                     df = df.rename(columns=rename_map)
+                    st.sidebar.success("✅ Renamed X1-X18 columns to descriptive names")
                 
                 return df
-        except Exception:
+        except Exception as e:
+            st.sidebar.error(f"Error loading file: {str(e)}")
             continue
     
-    # If we reach here, all paths failed - but don't show error message
+    # If we reach here, all paths failed
+    st.sidebar.error("❌ Failed to load data from any location.")
+    st.error("Could not load the data file. Please check that the file exists in the specified locations.")
     return pd.DataFrame()  # Return empty DataFrame if all paths fail
 
-# Load the data with suppressed debug information
+# Load the data but suppress debug information in the UI
 try:
-    # Set up a placeholder for the loading message
-    with st.spinner("Loading data..."):
-        data = load_data()
+    # Temporarily capture and suppress the st.write outputs from load_data
+    import io
+    import contextlib
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    from streamlit.runtime.state import session_state
     
-    # Store data info in session state but don't display debug messages
+    # Load data without displaying debug messages
+    data = load_data()
+    
+    # Only show minimal data info in sidebar if data is loaded
     if not data.empty:
-        # Check for required columns but don't show messages
-        required_cols = ['Current Assets', 'Total Current Liabilities', 'Retained Earnings', 
-                        'Total Assets', 'EBIT', 'Market Value', 'Total Liabilities', 'Net Sales']
-        missing_cols = [col for col in required_cols if col not in data.columns]
-        
-        # Store in session state for potential use
-        st.session_state['missing_cols'] = missing_cols
+        with st.sidebar.expander("📊 Data Information"):
+            st.write(f"**Rows:** {data.shape[0]}")
+            st.write(f"**Columns:** {data.shape[1]}")
+            
+            # Check for required columns silently
+            required_cols = ['Current Assets', 'Total Current Liabilities', 'Retained Earnings', 
+                            'Total Assets', 'EBIT', 'Market Value', 'Total Liabilities', 'Net Sales']
+            missing_cols = [col for col in required_cols if col not in data.columns]
+            
+            if missing_cols:
+                st.error(f"⚠️ Missing required columns: {', '.join(missing_cols)}")
 except Exception as e:
-    # Store error in session state but don't display it prominently
-    st.session_state['data_error'] = str(e)
+    st.error(f"Error during data initialization")
     data = pd.DataFrame()
 
 # Set session state to track data loading
@@ -389,7 +397,7 @@ roc_curves = {
     }
 }
 
-# Function to calculate Z-Score with minimal visible debugging
+# Function to calculate Z-Score
 def calculate_zscore(df):
     """Calculate Altman Z-Score for financial data"""
     # Create a Z-Score dataframe
@@ -421,11 +429,8 @@ def calculate_zscore(df):
         # Handle infinite values or NaNs
         zscore_df.replace([np.inf, -np.inf], np.nan, inplace=True)
         
-        # Track NaN values in session state but don't display
+        # Calculate NaN values but don't display in UI
         num_nan = zscore_df['Z-Score'].isna().sum()
-        perc_nan = 100 * num_nan / len(zscore_df)
-        st.session_state['z_score_nan'] = num_nan
-        st.session_state['z_score_nan_percent'] = perc_nan
         
         # Fill NaN values with mean
         if num_nan > 0:
@@ -447,36 +452,13 @@ def calculate_zscore(df):
         
         return zscore_df
     except Exception as e:
-        # Store error in session state but don't display prominently
-        st.session_state['z_score_error'] = str(e)
+        st.error(f"Error calculating Z-Score. Please check financial data.")
         return pd.DataFrame()
 
-# Custom sidebar navigation
-st.sidebar.markdown('<p class="sidebar-header">Bankruptcy Prediction Dashboard</p>', unsafe_allow_html=True)
-st.sidebar.markdown('### Start Here:')
-st.sidebar.markdown('<p class="sidebar-nav-item">Info about this App</p>', unsafe_allow_html=True)
-
-st.sidebar.markdown('### Dashboard Options:')
+# Sidebar navigation
+st.sidebar.title("Navigation")
 pages = ["Overview", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices", "Z-Score Analysis"]
-
-# Track the selected page in session state to maintain it between reruns
-if 'selected_page' not in st.session_state:
-    st.session_state['selected_page'] = "Overview"
-
-# Create clickable navigation items
-for i, page in enumerate(pages):
-    if st.session_state['selected_page'] == page:
-        st.sidebar.markdown(
-            f'<div class="sidebar-nav-item sidebar-nav-item-active">{i+1}) {page}</div>', 
-            unsafe_allow_html=True
-        )
-    else:
-        if st.sidebar.button(f"{i+1}) {page}", key=f"nav_{page}"):
-            st.session_state['selected_page'] = page
-            st.experimental_rerun()
-
-# Get the selected page from session state
-selected_page = st.session_state['selected_page']
+selected_page = st.sidebar.radio("Go to", pages)
 
 # Show main header and introduction only on the overview page
 if selected_page == "Overview":
