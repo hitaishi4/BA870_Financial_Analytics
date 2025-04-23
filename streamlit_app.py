@@ -39,6 +39,21 @@ This dashboard presents a comprehensive analysis of bankruptcy prediction models
 from American companies. The analysis compares multiple machine learning models and their performance metrics.
 """)
 
+# Load data from CSV
+@st.cache_data
+def load_data():
+    df = pd.read_csv('data/american_bankruptcy.csv')
+    return df
+
+# Try to load data - with error handling
+try:
+    data = load_data()
+    st.session_state['data_loaded'] = True
+except Exception as e:
+    st.error(f"Error loading data: {e}")
+    st.info("Please make sure the 'data/american_bankruptcy.csv' file exists in your repository.")
+    st.session_state['data_loaded'] = False
+
 # Define feature names and model results based on your analysis
 feature_names = [
     "Current Assets", "Cost of Goods Sold", "D&A", "EBITDA",
@@ -258,53 +273,54 @@ roc_curves = {
     }
 }
 
-# Sample test data for demonstration
-def generate_sample_data():
-    np.random.seed(42)
-    n_samples = 12282  # Total samples based on your confusion matrix
-    
-    # Create a DataFrame with feature columns
-    X_test = pd.DataFrame(index=range(n_samples))
-    
-    # Fill with reasonable financial values
-    X_test['Current Assets'] = np.random.lognormal(mean=1.5, sigma=0.7, size=n_samples) * 1000000
-    X_test['Total Current Liabilities'] = np.random.lognormal(mean=1.3, sigma=0.6, size=n_samples) * 800000
-    X_test['Retained Earnings'] = np.random.lognormal(mean=0.5, sigma=1.2, size=n_samples) * 500000
-    X_test['Total Assets'] = X_test['Current Assets'] * np.random.uniform(1.5, 3.0, size=n_samples)
-    X_test['EBIT'] = np.random.lognormal(mean=0.2, sigma=1.0, size=n_samples) * 200000
-    X_test['Market Value'] = np.random.lognormal(mean=1.0, sigma=1.1, size=n_samples) * 2000000
-    X_test['Total Liabilities'] = X_test['Total Current Liabilities'] * np.random.uniform(1.2, 2.5, size=n_samples)
-    X_test['Net Sales'] = np.random.lognormal(mean=1.7, sigma=0.8, size=n_samples) * 1500000
-    X_test['Cost of Goods Sold'] = X_test['Net Sales'] * np.random.uniform(0.5, 0.8, size=n_samples)
-    X_test['D&A'] = np.random.lognormal(mean=-0.5, sigma=0.6, size=n_samples) * 100000
-    X_test['EBITDA'] = X_test['EBIT'] + X_test['D&A']
-    X_test['Inventory'] = np.random.lognormal(mean=0.3, sigma=0.7, size=n_samples) * 300000
-    X_test['Net Income'] = X_test['EBIT'] - np.random.lognormal(mean=-0.3, sigma=0.5, size=n_samples) * 50000
-    X_test['Total Receivables'] = np.random.lognormal(mean=0.2, sigma=0.6, size=n_samples) * 250000
-    X_test['Gross Profit'] = X_test['Net Sales'] - X_test['Cost of Goods Sold']
-    X_test['Total Long-term Debt'] = X_test['Total Liabilities'] - X_test['Total Current Liabilities']
-    X_test['Total Revenue'] = X_test['Net Sales'] * np.random.uniform(1.0, 1.2, size=n_samples)
-    X_test['Total Operating Expenses'] = X_test['Gross Profit'] - X_test['EBIT']
-    
-    # Create bankruptcy status
-    bankruptcies = np.zeros(n_samples, dtype=int)
-    
-    # Set bankruptcies based on confusion matrices
-    # From Decision Tree: 69 TP + 218 FN = 287 actual bankruptcies
-    bankruptcies[:287] = 1
-    
-    return X_test, bankruptcies
-
-# Initialize session state if needed
-if 'X_test' not in st.session_state or 'y_test' not in st.session_state:
-    X_test, y_test = generate_sample_data()
-    st.session_state['X_test'] = X_test
-    st.session_state['y_test'] = y_test
-
 # Sidebar navigation
 st.sidebar.title("Navigation")
 pages = ["Overview", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices", "Z-Score Analysis"]
 selected_page = st.sidebar.radio("Go to", pages)
+
+# Function to calculate Z-Score
+def calculate_zscore(df):
+    """Calculate Altman Z-Score for financial data"""
+    # Create a Z-Score dataframe
+    zscore_df = pd.DataFrame(index=df.index)
+    
+    try:
+        # T1 = Working Capital / Total Assets
+        zscore_df['T1'] = (df['Current Assets'] - df['Total Current Liabilities']) / df['Total Assets']
+        
+        # T2 = Retained Earnings / Total Assets
+        zscore_df['T2'] = df['Retained Earnings'] / df['Total Assets']
+        
+        # T3 = EBIT / Total Assets
+        zscore_df['T3'] = df['EBIT'] / df['Total Assets']
+        
+        # T4 = Market Value / Total Liabilities
+        zscore_df['T4'] = df['Market Value'] / df['Total Liabilities']
+        
+        # T5 = Sales / Total Assets
+        zscore_df['T5'] = df['Net Sales'] / df['Total Assets']
+        
+        # Calculate Z-Score
+        zscore_df['Z-Score'] = (1.2 * zscore_df['T1'] + 
+                              1.4 * zscore_df['T2'] + 
+                              3.3 * zscore_df['T3'] + 
+                              0.6 * zscore_df['T4'] + 
+                              0.99 * zscore_df['T5'])
+        
+        # Classify based on Z-Score
+        zscore_df['Z-Score Status'] = pd.cut(
+            zscore_df['Z-Score'], 
+            bins=[-float('inf'), 1.8, 2.99, float('inf')],
+            labels=['Distress', 'Grey', 'Safe']
+        )
+        
+        # Convert Z-Score classification to binary (Distress = 1, others = 0)
+        zscore_df['Z-Score Prediction'] = (zscore_df['Z-Score Status'] == 'Distress').astype(int)
+        
+        return zscore_df
+    except Exception as e:
+        st.error(f"Error calculating Z-Score: {e}")
+        return pd.DataFrame()
 
 # Render the selected page
 if selected_page == "Overview":
@@ -401,6 +417,15 @@ if selected_page == "Overview":
     plt.tight_layout()
     
     st.pyplot(fig)
+    
+    # Display dataset info if data is loaded
+    if st.session_state.get('data_loaded', False):
+        st.markdown("### Dataset Preview")
+        st.dataframe(data.head())
+        
+        st.markdown("### Dataset Statistics")
+        st.write(f"Number of records: {len(data)}")
+        st.write(f"Number of features: {len(data.columns)}")
 
 elif selected_page == "Model Comparison":
     st.markdown('<p class="sub-header">Model Performance Comparison</p>', unsafe_allow_html=True)
@@ -865,215 +890,198 @@ elif selected_page == "Z-Score Analysis":
     - Z < 1.80: "Distress" Zone - High risk of bankruptcy
     """)
     
-    # Calculate Z-Score using available financial metrics
-    if st.session_state.get('X_test') is not None and st.session_state.get('y_test') is not None:
-        X_test = st.session_state['X_test']
-        y_test = st.session_state['y_test']
-        
-        # Calculate Z-Score components
-        df_zscore = pd.DataFrame(index=X_test.index)
-        
-        # T1 calculation (Working Capital / Total Assets)
-        df_zscore['T1'] = (X_test['Current Assets'] - X_test['Total Current Liabilities']) / X_test['Total Assets']
-        
-        # T2 calculation (Retained Earnings / Total Assets)
-        df_zscore['T2'] = X_test['Retained Earnings'] / X_test['Total Assets']
-        
-        # T3 calculation (EBIT / Total Assets)
-        df_zscore['T3'] = X_test['EBIT'] / X_test['Total Assets']
-        
-        # T4 calculation (Market Value / Total Liabilities)
-        df_zscore['T4'] = X_test['Market Value'] / X_test['Total Liabilities']
-        
-        # T5 calculation (Sales / Total Assets)
-        df_zscore['T5'] = X_test['Net Sales'] / X_test['Total Assets']
-        
+    # Check if data is loaded
+    if st.session_state.get('data_loaded', False) and len(st.session_state.get('X_test', pd.DataFrame())) > 0:
         # Calculate Z-Score
-        df_zscore['Z-Score'] = (1.2 * df_zscore['T1'] + 
-                                1.4 * df_zscore['T2'] + 
-                                3.3 * df_zscore['T3'] + 
-                                0.6 * df_zscore['T4'] + 
-                                0.99 * df_zscore['T5'])
+        if 'zscore_df' not in st.session_state:
+            # Use actual data from the loaded CSV
+            zscore_df = calculate_zscore(data)
+            if not zscore_df.empty:
+                # Add actual bankruptcy status if available in the data
+                if 'Bankrupt' in data.columns:
+                    zscore_df['Actual Status'] = data['Bankrupt']
+                st.session_state['zscore_df'] = zscore_df
         
-        # Classify based on Z-Score
-        df_zscore['Z-Score Status'] = pd.cut(
-            df_zscore['Z-Score'], 
-            bins=[-float('inf'), 1.8, 2.99, float('inf')],
-            labels=['Distress', 'Grey', 'Safe']
-        )
+        # Get Z-Score dataframe from session state
+        zscore_df = st.session_state.get('zscore_df', pd.DataFrame())
         
-        # Convert Z-Score classification to binary (Distress = 1, others = 0)
-        df_zscore['Z-Score Prediction'] = (df_zscore['Z-Score Status'] == 'Distress').astype(int)
-        
-        # Add actual bankruptcy status
-        df_zscore['Actual Status'] = y_test
-        
-        # Display Z-Score statistics
-        st.markdown("### Z-Score Distribution")
-        
-        # Create histogram
-        fig, ax = plt.subplots(figsize=(10, 6))
-        
-        # Split by actual bankruptcy status
-        z_bankrupt = df_zscore[df_zscore['Actual Status'] == 1]['Z-Score']
-        z_healthy = df_zscore[df_zscore['Actual Status'] == 0]['Z-Score']
-        
-        # Plot histograms
-        ax.hist(z_healthy, bins=30, alpha=0.7, label='Healthy Companies', color='#395c40')
-        ax.hist(z_bankrupt, bins=30, alpha=0.7, label='Bankrupt Companies', color='#a63603')
-        
-        # Add vertical lines for Z-Score zones
-        ax.axvline(x=1.8, color='red', linestyle='--', alpha=0.7, label='Z=1.8 (Distress Threshold)')
-        ax.axvline(x=2.99, color='green', linestyle='--', alpha=0.7, label='Z=2.99 (Safe Threshold)')
-        
-        ax.set_xlabel('Z-Score')
-        ax.set_ylabel('Number of Companies')
-        ax.set_title('Z-Score Distribution by Actual Bankruptcy Status')
-        ax.legend()
-        plt.tight_layout()
-        
-        st.pyplot(fig)
-        
-        # Calculate Z-Score performance metrics
-        z_pred = df_zscore['Z-Score Prediction'].values
-        z_actual = df_zscore['Actual Status'].values
-        
-        # Calculate metrics
-        z_accuracy = (z_pred == z_actual).mean()
-        z_precision = (z_pred & z_actual).sum() / z_pred.sum() if z_pred.sum() > 0 else 0
-        z_recall = (z_pred & z_actual).sum() / z_actual.sum() if z_actual.sum() > 0 else 0
-        z_f1 = 2 * z_precision * z_recall / (z_precision + z_recall) if (z_precision + z_recall) > 0 else 0
-        
-        # Calculate Z-Score confusion matrix
-        z_tn = ((z_pred == 0) & (z_actual == 0)).sum()
-        z_fp = ((z_pred == 1) & (z_actual == 0)).sum()
-        z_fn = ((z_pred == 0) & (z_actual == 1)).sum()
-        z_tp = ((z_pred == 1) & (z_actual == 1)).sum()
-        
-        # Compare Z-Score with ML models
-        st.markdown("### Z-Score vs. Machine Learning Models")
-        
-        # Create comparison DataFrame
-        comparison_data = {
-            'Model': ['Altman Z-Score'] + list(metrics.keys()),
-            'Accuracy': [z_accuracy] + [metrics[model]['accuracy'] for model in metrics],
-            'Precision': [z_precision] + [metrics[model]['precision'] for model in metrics],
-            'Recall': [z_recall] + [metrics[model]['recall'] for model in metrics],
-            'F1 Score': [z_f1] + [metrics[model]['f1'] for model in metrics]
-        }
-        
-        comparison_df = pd.DataFrame(comparison_data).set_index('Model')
-        
-        # Display comparison
-        st.dataframe(comparison_df.style.highlight_max(axis=0))
-        
-        # Z-Score confusion matrix
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.markdown("### Z-Score Confusion Matrix")
-            z_cm_df = pd.DataFrame(
-                [[z_tn, z_fp], [z_fn, z_tp]],
-                index=['Actual Alive', 'Actual Bankrupt'],
-                columns=['Predicted Alive', 'Predicted Bankrupt']
-            )
-            st.dataframe(z_cm_df)
+        if not zscore_df.empty:
+            # Display Z-Score distribution
+            st.markdown("### Z-Score Distribution")
             
-            # Visual representation of confusion matrix
-            cm_pct = np.zeros((2, 2))
-            cm_pct[0, 0] = 100 * z_tn / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
-            cm_pct[0, 1] = 100 * z_fp / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
-            cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
-            cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
+            # Check if actual bankruptcy status is available
+            has_actual_status = 'Actual Status' in zscore_df.columns
             
-            html = f"""
-            <style>
-            .cm-box {{
-                padding: 20px;
-                text-align: center;
-                margin: 5px;
-                font-weight: bold;
-                color: white;
-            }}
-            .box-container {{
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: 1fr 1fr;
-                gap: 10px;
-                margin: 20px 0;
-            }}
-            .tn {{
-                background-color: rgba(57, 92, 64, 0.8);
-            }}
-            .fp {{
-                background-color: rgba(166, 54, 3, 0.8);
-            }}
-            .fn {{
-                background-color: rgba(166, 54, 3, 0.8);
-            }}
-            .tp {{
-                background-color: rgba(57, 92, 64, 0.8);
-            }}
-            </style>
-            <div class="box-container">
-                <div class="cm-box tn">
-                    True Negative<br>
-                    {z_tn} instances<br>
-                    ({cm_pct[0, 0]:.1f}% of actual alive)
-                </div>
-                <div class="cm-box fp">
-                    False Positive<br>
-                    {z_fp} instances<br>
-                    ({cm_pct[0, 1]:.1f}% of actual alive)
-                </div>
-                <div class="cm-box fn">
-                    False Negative<br>
-                    {z_fn} instances<br>
-                    ({cm_pct[1, 0]:.1f}% of actual bankrupt)
-                </div>
-                <div class="cm-box tp">
-                    True Positive<br>
-                    {z_tp} instances<br>
-                    ({cm_pct[1, 1]:.1f}% of actual bankrupt)
-                </div>
-            </div>
-            """
-            st.markdown(html, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown("### Z-Score Metrics")
-            st.markdown(f"""
-            - **True Negatives (TN)**: {z_tn}
-            - **False Positives (FP)**: {z_fp}
-            - **False Negatives (FN)**: {z_fn}
-            - **True Positives (TP)**: {z_tp}
+            # Create histogram
+            fig, ax = plt.subplots(figsize=(10, 6))
             
-            - **Accuracy**: {z_accuracy:.4f}
-            - **Precision**: {z_precision:.4f}
-            - **Recall**: {z_recall:.4f}
-            - **F1 Score**: {z_f1:.4f}
+            if has_actual_status:
+                # Split by actual bankruptcy status
+                z_bankrupt = zscore_df[zscore_df['Actual Status'] == 1]['Z-Score']
+                z_healthy = zscore_df[zscore_df['Actual Status'] == 0]['Z-Score']
+                
+                # Plot histograms
+                ax.hist(z_healthy, bins=30, alpha=0.7, label='Healthy Companies', color='#395c40')
+                ax.hist(z_bankrupt, bins=30, alpha=0.7, label='Bankrupt Companies', color='#a63603')
+            else:
+                # Plot single histogram without status distinction
+                ax.hist(zscore_df['Z-Score'], bins=30, alpha=0.7, color='#395c40')
+            
+            # Add vertical lines for Z-Score zones
+            ax.axvline(x=1.8, color='red', linestyle='--', alpha=0.7, label='Z=1.8 (Distress Threshold)')
+            ax.axvline(x=2.99, color='green', linestyle='--', alpha=0.7, label='Z=2.99 (Safe Threshold)')
+            
+            ax.set_xlabel('Z-Score')
+            ax.set_ylabel('Number of Companies')
+            ax.set_title('Z-Score Distribution')
+            ax.legend()
+            plt.tight_layout()
+            
+            st.pyplot(fig)
+            
+            # Calculate Z-Score performance metrics
+            if has_actual_status:
+                z_pred = zscore_df['Z-Score Prediction'].values
+                z_actual = zscore_df['Actual Status'].values
+                
+                # Calculate metrics
+                z_accuracy = (z_pred == z_actual).mean()
+                z_precision = (z_pred & z_actual).sum() / z_pred.sum() if z_pred.sum() > 0 else 0
+                z_recall = (z_pred & z_actual).sum() / z_actual.sum() if z_actual.sum() > 0 else 0
+                z_f1 = 2 * z_precision * z_recall / (z_precision + z_recall) if (z_precision + z_recall) > 0 else 0
+                
+                # Calculate Z-Score confusion matrix
+                z_tn = ((z_pred == 0) & (z_actual == 0)).sum()
+                z_fp = ((z_pred == 1) & (z_actual == 0)).sum()
+                z_fn = ((z_pred == 0) & (z_actual == 1)).sum()
+                z_tp = ((z_pred == 1) & (z_actual == 1)).sum()
+                
+                # Compare Z-Score with ML models
+                st.markdown("### Z-Score vs. Machine Learning Models")
+                
+                # Create comparison DataFrame
+                comparison_data = {
+                    'Model': ['Altman Z-Score'] + list(metrics.keys()),
+                    'Accuracy': [z_accuracy] + [metrics[model]['accuracy'] for model in metrics],
+                    'Precision': [z_precision] + [metrics[model]['precision'] for model in metrics],
+                    'Recall': [z_recall] + [metrics[model]['recall'] for model in metrics],
+                    'F1 Score': [z_f1] + [metrics[model]['f1'] for model in metrics]
+                }
+                
+                comparison_df = pd.DataFrame(comparison_data).set_index('Model')
+                
+                # Display comparison
+                st.dataframe(comparison_df.style.highlight_max(axis=0))
+                
+                # Z-Score confusion matrix
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    st.markdown("### Z-Score Confusion Matrix")
+                    z_cm_df = pd.DataFrame(
+                        [[z_tn, z_fp], [z_fn, z_tp]],
+                        index=['Actual Alive', 'Actual Bankrupt'],
+                        columns=['Predicted Alive', 'Predicted Bankrupt']
+                    )
+                    st.dataframe(z_cm_df)
+                    
+                    # Visual representation of confusion matrix
+                    cm_pct = np.zeros((2, 2))
+                    cm_pct[0, 0] = 100 * z_tn / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
+                    cm_pct[0, 1] = 100 * z_fp / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
+                    cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
+                    cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
+                    
+                    html = f"""
+                    <style>
+                    .cm-box {{
+                        padding: 20px;
+                        text-align: center;
+                        margin: 5px;
+                        font-weight: bold;
+                        color: white;
+                    }}
+                    .box-container {{
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        grid-template-rows: 1fr 1fr;
+                        gap: 10px;
+                        margin: 20px 0;
+                    }}
+                    .tn {{
+                        background-color: rgba(57, 92, 64, 0.8);
+                    }}
+                    .fp {{
+                        background-color: rgba(166, 54, 3, 0.8);
+                    }}
+                    .fn {{
+                        background-color: rgba(166, 54, 3, 0.8);
+                    }}
+                    .tp {{
+                        background-color: rgba(57, 92, 64, 0.8);
+                    }}
+                    </style>
+                    <div class="box-container">
+                        <div class="cm-box tn">
+                            True Negative<br>
+                            {z_tn} instances<br>
+                            ({cm_pct[0, 0]:.1f}% of actual alive)
+                        </div>
+                        <div class="cm-box fp">
+                            False Positive<br>
+                            {z_fp} instances<br>
+                            ({cm_pct[0, 1]:.1f}% of actual alive)
+                        </div>
+                        <div class="cm-box fn">
+                            False Negative<br>
+                            {z_fn} instances<br>
+                            ({cm_pct[1, 0]:.1f}% of actual bankrupt)
+                        </div>
+                        <div class="cm-box tp">
+                            True Positive<br>
+                            {z_tp} instances<br>
+                            ({cm_pct[1, 1]:.1f}% of actual bankrupt)
+                        </div>
+                    </div>
+                    """
+                    st.markdown(html, unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown("### Z-Score Metrics")
+                    st.markdown(f"""
+                    - **True Negatives (TN)**: {z_tn}
+                    - **False Positives (FP)**: {z_fp}
+                    - **False Negatives (FN)**: {z_fn}
+                    - **True Positives (TP)**: {z_tp}
+                    
+                    - **Accuracy**: {z_accuracy:.4f}
+                    - **Precision**: {z_precision:.4f}
+                    - **Recall**: {z_recall:.4f}
+                    - **F1 Score**: {z_f1:.4f}
+                    """)
+            
+            # Add financial insight
+            st.markdown("### Financial Insights")
+            st.markdown("""
+            The Altman Z-Score is widely used in financial analysis for predicting bankruptcy risk. It combines multiple financial ratios 
+            that measure profitability, leverage, liquidity, solvency, and activity into a single score.
+            
+            #### Comparing with Machine Learning Models:
+            
+            - **Interpretability**: Z-Score is easy to interpret and communicate to stakeholders
+            - **Simplicity**: Simple linear combination of 5 financial ratios
+            - **Historical validation**: Well-established method with decades of validation
+            
+            #### Limitations:
+            
+            - **Static weights**: Uses fixed coefficients that don't adapt to changing economic conditions
+            - **Limited inputs**: Only uses 5 financial ratios, while ML models can incorporate more features
+            - **No industry adjustment**: Same thresholds for all industries, unlike ML models that can learn industry-specific patterns
             """)
-        
-        # Add financial insight
-        st.markdown("### Financial Insights")
-        st.markdown("""
-        The Altman Z-Score is widely used in financial analysis for predicting bankruptcy risk. It combines multiple financial ratios 
-        that measure profitability, leverage, liquidity, solvency, and activity into a single score.
-        
-        #### Comparing with Machine Learning Models:
-        
-        - **Interpretability**: Z-Score is easy to interpret and communicate to stakeholders
-        - **Simplicity**: Simple linear combination of 5 financial ratios
-        - **Historical validation**: Well-established method with decades of validation
-        
-        #### Limitations:
-        
-        - **Static weights**: Uses fixed coefficients that don't adapt to changing economic conditions
-        - **Limited inputs**: Only uses 5 financial ratios, while ML models can incorporate more features
-        - **No industry adjustment**: Same thresholds for all industries, unlike ML models that can learn industry-specific patterns
-        """)
+        else:
+            st.warning("Could not calculate Z-Score with the available data. Please ensure the dataset contains the necessary financial metrics.")
     else:
-        st.warning("Please ensure data has been processed first. Z-Score calculation requires financial data.")
+        st.warning("Please load data first to perform Z-Score analysis. The dataset should include financial metrics like Current Assets, Total Assets, EBIT, etc.")
 
 # Footer
 st.markdown("---")
