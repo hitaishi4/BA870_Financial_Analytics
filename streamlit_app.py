@@ -1353,7 +1353,7 @@ pythonelif selected_page == "Z-Score Analysis":
     ### What is the Altman Z-Score?
     
     The Altman Z-Score is a financial formula developed by Edward Altman in 1968 to predict the probability of a company going bankrupt. 
-    It combines multiple financial ratios into a single score that helps assess a company's financial health.
+    It combines multiple financial ratios into a single score that helps assess the financial health of the company.
     
     **Original Z-score formula:**
     
