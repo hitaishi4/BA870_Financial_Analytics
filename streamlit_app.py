@@ -1320,8 +1320,6 @@ elif selected_page == "Confusion Matrices":
     false alarm rate, while SVM has the lowest false alarm rate but also the lowest detection rate.
     """)
 
-
-
 elif selected_page == "Z-Score Analysis":
     # Show page header with new centered style
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
@@ -1528,81 +1526,23 @@ elif selected_page == "Z-Score Analysis":
                         cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
                         cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
 
-                        # Simple HTML with no indentation to avoid errors
-                        html = """
-<style>
-.cm-box {
-    padding: 20px;
-    text-align: center;
-    margin: 5px;
-    font-weight: bold;
-    color: white;
-}
-.box-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 10px;
-    margin: 20px 0;
-}
-.tn {
-    background-color: rgba(57, 92, 64, 0.8);
-}
-.fp {
-    background-color: rgba(166, 54, 3, 0.8);
-}
-.fn {
-    background-color: rgba(166, 54, 3, 0.8);
-}
-.tp {
-    background-color: rgba(57, 92, 64, 0.8);
-}
-</style>
-<div class="box-container">
-    <div class="cm-box tn">
-        True Negative<br>
-        {0:,} instances<br>
-        ({1:.1f}% of actual alive)
-    </div>
-    <div class="cm-box fp">
-        False Positive<br>
-        {2:,} instances<br>
-        ({3:.1f}% of actual alive)
-    </div>
-    <div class="cm-box fn">
-        False Negative<br>
-        {4:,} instances<br>
-        ({5:.1f}% of actual bankrupt)
-    </div>
-    <div class="cm-box tp">
-        True Positive<br>
-        {6:,} instances<br>
-        ({7:.1f}% of actual bankrupt)
-    </div>
-</div>
-""".format(
-                            z_tn, cm_pct[0, 0],
-                            z_fp, cm_pct[0, 1],
-                            z_fn, cm_pct[1, 0],
-                            z_tp, cm_pct[1, 1]
-                        )
-                        st.markdown(html, unsafe_allow_html=True)
+                        # Create HTML with explicit styling and no indentation issues
+                        confusion_html = """<style>.cm-box {padding: 20px; text-align: center; margin: 5px; font-weight: bold; color: white;} .box-container {display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; margin: 20px 0;} .tn {background-color: rgba(57, 92, 64, 0.8);} .fp {background-color: rgba(166, 54, 3, 0.8);} .fn {background-color: rgba(166, 54, 3, 0.8);} .tp {background-color: rgba(57, 92, 64, 0.8);}</style><div class="box-container"><div class="cm-box tn">True Negative<br>{0:,} instances<br>({1:.1f}% of actual alive)</div><div class="cm-box fp">False Positive<br>{2:,} instances<br>({3:.1f}% of actual alive)</div><div class="cm-box fn">False Negative<br>{4:,} instances<br>({5:.1f}% of actual bankrupt)</div><div class="cm-box tp">True Positive<br>{6:,} instances<br>({7:.1f}% of actual bankrupt)</div></div>""".format(z_tn, cm_pct[0, 0], z_fp, cm_pct[0, 1], z_fn, cm_pct[1, 0], z_tp, cm_pct[1, 1])
+                        
+                        st.markdown(confusion_html, unsafe_allow_html=True)
                     
                     with col2:
                         st.markdown("### Z-Score Metrics")
-                        # Use string formatting without f-strings to avoid errors
-                        metrics_text = """
-- **True Negatives (TN)**: {:,}
-- **False Positives (FP)**: {:,}
-- **False Negatives (FN)**: {:,}
-- **True Positives (TP)**: {:,}
-
-- **Accuracy**: {:.4f}
-- **Precision**: {:.4f}
-- **Recall**: {:.4f}
-- **F1 Score**: {:.4f}
-""".format(z_tn, z_fp, z_fn, z_tp, z_accuracy, z_precision, z_recall, z_f1)
-                        st.markdown(metrics_text)
+                        # Use straightforward st.write statements instead of string formatting
+                        st.write(f"**True Negatives (TN)**: {z_tn:,}")
+                        st.write(f"**False Positives (FP)**: {z_fp:,}")
+                        st.write(f"**False Negatives (FN)**: {z_fn:,}")
+                        st.write(f"**True Positives (TP)**: {z_tp:,}")
+                        st.write("")
+                        st.write(f"**Accuracy**: {z_accuracy:.4f}")
+                        st.write(f"**Precision**: {z_precision:.4f}")
+                        st.write(f"**Recall**: {z_recall:.4f}")
+                        st.write(f"**F1 Score**: {z_f1:.4f}")
                     
                     # Provide diagnostic information and recommendations
                     st.markdown("### Diagnostic Information")
