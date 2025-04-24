@@ -1321,32 +1321,27 @@ elif selected_page == "Confusion Matrices":
     """)
 
 elif selected_page == "Z-Score Analysis":
-    # Show page header with new centered style
+    # Show page header
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
     
-    st.markdown("""
-    ### What is the Altman Z-Score?
+    # Basic introduction without complex formatting
+    st.markdown("### What is the Altman Z-Score?")
+    st.write("The Altman Z-Score is a financial formula developed by Edward Altman in 1968 to predict the probability of a company going bankrupt. It combines multiple financial ratios into a single score that helps assess the financial health of the company.")
     
-    The Altman Z-Score is a financial formula developed by Edward Altman in 1968 to predict the probability of a company going bankrupt. 
-    It combines multiple financial ratios into a single score that helps assess the financial health of the company.
+    st.markdown("**Original Z-score formula:**")
+    st.write("Z = 1.2*T1 + 1.4*T2 + 3.3*T3 + 0.6*T4 + 0.99*T5")
     
-    **Original Z-score formula:**
+    st.markdown("Where:")
+    st.write("- T1 = Working Capital / Total Assets = (Current Assets - Current Liabilities) / Total Assets")
+    st.write("- T2 = Retained Earnings / Total Assets")
+    st.write("- T3 = Earnings Before Interest and Taxes / Total Assets")
+    st.write("- T4 = Market Value of Equity / Book Value of Total Liabilities")
+    st.write("- T5 = Sales / Total Assets")
     
-    Z = 1.2*T1 + 1.4*T2 + 3.3*T3 + 0.6*T4 + 0.99*T5
-    
-    Where:
-    - T1 = Working Capital / Total Assets = (Current Assets - Current Liabilities) / Total Assets
-    - T2 = Retained Earnings / Total Assets
-    - T3 = Earnings Before Interest and Taxes / Total Assets
-    - T4 = Market Value of Equity / Book Value of Total Liabilities
-    - T5 = Sales / Total Assets
-    
-    ### Interpretation
-    
-    - Z > 2.99: "Safe" Zone - Company is in good financial health
-    - 1.8 < Z < 2.99: "Grey" Zone - Some financial concerns exist
-    - Z < 1.80: "Distress" Zone - High risk of bankruptcy
-    """)
+    st.markdown("### Interpretation")
+    st.write("- Z > 2.99: \"Safe\" Zone - Company is in good financial health")
+    st.write("- 1.8 < Z < 2.99: \"Grey\" Zone - Some financial concerns exist")
+    st.write("- Z < 1.80: \"Distress\" Zone - High risk of bankruptcy")
     
     # Check if data is loaded
     if st.session_state.get('data_loaded', False) and not data.empty:
@@ -1356,7 +1351,7 @@ elif selected_page == "Z-Score Analysis":
         missing_cols = [col for col in required_cols if col not in data.columns]
         
         if missing_cols:
-            st.error(f"Cannot calculate Z-Score: Missing required columns: {', '.join(missing_cols)}")
+            st.error("Cannot calculate Z-Score: Missing required columns: " + ", ".join(missing_cols))
             st.warning("Please ensure your data file includes all necessary financial metrics or check that column renaming was successful.")
             
             # Display current column mapping for debugging
@@ -1364,7 +1359,7 @@ elif selected_page == "Z-Score Analysis":
                 st.write("Your dataset has these columns:")
                 st.write(", ".join(data.columns.tolist()))
                 
-                st.write("\nExpected mapping from X1-X18:")
+                st.write("Expected mapping from X1-X18:")
                 mapping_df = pd.DataFrame(list(rename_map.items()), columns=["Original", "Expected"])
                 st.dataframe(mapping_df)
         else:            
@@ -1398,7 +1393,8 @@ elif selected_page == "Z-Score Analysis":
                 
                 # Calculate percentage
                 bankrupt_pct = 100 * bankrupt_count / len(data)
-                st.info(f"**Bankruptcy Rate**: {bankrupt_pct:.2f}% ({bankrupt_count:,} out of {len(data):,} companies)")
+                bankrupt_info = f"**Bankruptcy Rate**: {bankrupt_pct:.2f}% ({bankrupt_count:,} out of {len(data):,} companies)"
+                st.info(bankrupt_info)
                 
                 if bankrupt_count == 0:
                     st.warning("⚠️ No bankrupt companies found in the dataset! Please check your 'Bankrupt' column.")
@@ -1519,21 +1515,15 @@ elif selected_page == "Z-Score Analysis":
                         )
                         st.dataframe(z_cm_df)
                         
-                        # Visual representation of confusion matrix
-                        cm_pct = np.zeros((2, 2))
-                        cm_pct[0, 0] = 100 * z_tn / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
-                        cm_pct[0, 1] = 100 * z_fp / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
-                        cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
-                        cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
-
-                        # Create HTML with explicit styling and no indentation issues
-                        confusion_html = """<style>.cm-box {padding: 20px; text-align: center; margin: 5px; font-weight: bold; color: white;} .box-container {display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 10px; margin: 20px 0;} .tn {background-color: rgba(57, 92, 64, 0.8);} .fp {background-color: rgba(166, 54, 3, 0.8);} .fn {background-color: rgba(166, 54, 3, 0.8);} .tp {background-color: rgba(57, 92, 64, 0.8);}</style><div class="box-container"><div class="cm-box tn">True Negative<br>{0:,} instances<br>({1:.1f}% of actual alive)</div><div class="cm-box fp">False Positive<br>{2:,} instances<br>({3:.1f}% of actual alive)</div><div class="cm-box fn">False Negative<br>{4:,} instances<br>({5:.1f}% of actual bankrupt)</div><div class="cm-box tp">True Positive<br>{6:,} instances<br>({7:.1f}% of actual bankrupt)</div></div>""".format(z_tn, cm_pct[0, 0], z_fp, cm_pct[0, 1], z_fn, cm_pct[1, 0], z_tp, cm_pct[1, 1])
-                        
-                        st.markdown(confusion_html, unsafe_allow_html=True)
+                        # Visual representation - simplified version without complex HTML
+                        st.markdown("### Visual Representation")
+                        st.write(f"**True Negative**: {z_tn:,} instances ({100 * z_tn / (z_tn + z_fp):.1f}% of actual alive)")
+                        st.write(f"**False Positive**: {z_fp:,} instances ({100 * z_fp / (z_tn + z_fp):.1f}% of actual alive)")
+                        st.write(f"**False Negative**: {z_fn:,} instances ({100 * z_fn / (z_fn + z_tp):.1f}% of actual bankrupt)")
+                        st.write(f"**True Positive**: {z_tp:,} instances ({100 * z_tp / (z_fn + z_tp):.1f}% of actual bankrupt)")
                     
                     with col2:
                         st.markdown("### Z-Score Metrics")
-                        # Use straightforward st.write statements instead of string formatting
                         st.write(f"**True Negatives (TN)**: {z_tn:,}")
                         st.write(f"**False Positives (FP)**: {z_fp:,}")
                         st.write(f"**False Negatives (FN)**: {z_fn:,}")
@@ -1570,44 +1560,36 @@ elif selected_page == "Z-Score Analysis":
                 
                 # Add financial insight
                 st.markdown("### Financial Insights")
-                st.markdown("""
-                The Altman Z-Score is widely used in financial analysis for predicting bankruptcy risk. It combines multiple financial ratios 
-                that measure profitability, leverage, liquidity, solvency, and activity into a single score.
+                st.write("The Altman Z-Score is widely used in financial analysis for predicting bankruptcy risk. It combines multiple financial ratios that measure profitability, leverage, liquidity, solvency, and activity into a single score.")
                 
-                #### Comparing with Machine Learning Models:
+                st.markdown("#### Comparing with Machine Learning Models:")
+                st.write("- **Interpretability**: Z-Score is easy to interpret and communicate to stakeholders")
+                st.write("- **Simplicity**: Simple linear combination of 5 financial ratios")
+                st.write("- **Historical validation**: Well-established method with decades of validation")
                 
-                - **Interpretability**: Z-Score is easy to interpret and communicate to stakeholders
-                - **Simplicity**: Simple linear combination of 5 financial ratios
-                - **Historical validation**: Well-established method with decades of validation
+                st.markdown("#### Limitations:")
+                st.write("- **Static weights**: Uses fixed coefficients that don't adapt to changing economic conditions")
+                st.write("- **Limited inputs**: Only uses 5 financial ratios, while ML models can incorporate more features")
+                st.write("- **No industry adjustment**: Same thresholds for all industries, unlike ML models that can learn industry-specific patterns")
                 
-                #### Limitations:
-                
-                - **Static weights**: Uses fixed coefficients that don't adapt to changing economic conditions
-                - **Limited inputs**: Only uses 5 financial ratios, while ML models can incorporate more features
-                - **No industry adjustment**: Same thresholds for all industries, unlike ML models that can learn industry-specific patterns
-                
-                #### Addressing Common Z-Score Issues:
-                
-                - **Data issues**: Make sure financial data is properly formatted and scaled
-                - **Industry differences**: Consider using different weights for different industries
-                - **Time period mismatch**: Z-Score should be calculated from data prior to bankruptcy
-                - **Threshold adjustment**: Standard thresholds may not work for all datasets, consider adjusting based on your data
-                """)
+                st.markdown("#### Addressing Common Z-Score Issues:")
+                st.write("- **Data issues**: Make sure financial data is properly formatted and scaled")
+                st.write("- **Industry differences**: Consider using different weights for different industries")
+                st.write("- **Time period mismatch**: Z-Score should be calculated from data prior to bankruptcy")
+                st.write("- **Threshold adjustment**: Standard thresholds may not work for all datasets, consider adjusting based on your data")
             else:
                 st.warning("Could not calculate Z-Score with the available data. Please ensure the dataset contains the necessary financial metrics.")
     else:
         st.error("Please upload your data file. The data file should be named 'american_bankruptcy.csv' and located in the 'data/' directory.")
-        st.info("""
-        The dataset should include the following financial metrics:
-        - Current Assets
-        - Total Current Liabilities
-        - Retained Earnings
-        - Total Assets
-        - EBIT
-        - Market Value
-        - Total Liabilities
-        - Net Sales
-        """)
+        st.write("The dataset should include the following financial metrics:")
+        st.write("- Current Assets")
+        st.write("- Total Current Liabilities")
+        st.write("- Retained Earnings")
+        st.write("- Total Assets")
+        st.write("- EBIT")
+        st.write("- Market Value")
+        st.write("- Total Liabilities")
+        st.write("- Net Sales")
 
 # Footer
 st.markdown("---")
