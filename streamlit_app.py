@@ -1342,13 +1342,10 @@ elif selected_page == "Confusion Matrices":
     false alarm rate, while SVM has the lowest false alarm rate but also the lowest detection rate.
     """)
 
-Part 12: Z-Score Analysis Page
 elif selected_page == "Z-Score Analysis":
     # Show page header with new centered style
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
     
-    st.markdown("""
-    ### What is the Altman Z-Score?
     st.markdown("""
     ### What is the Altman Z-Score?
     
@@ -1551,58 +1548,63 @@ elif selected_page == "Z-Score Analysis":
                         cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
                         cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
 
-                        html = f"""
+                        html = """
                         <style>
-                        .cm-box {{
+                        .cm-box {
                             padding: 20px;
                             text-align: center;
                             margin: 5px;
                             font-weight: bold;
                             color: white;
-                        }}
-                        .box-container {{
+                        }
+                        .box-container {
                             display: grid;
                             grid-template-columns: 1fr 1fr;
                             grid-template-rows: 1fr 1fr;
                             gap: 10px;
                             margin: 20px 0;
-                        }}
-                        .tn {{
+                        }
+                        .tn {
                             background-color: rgba(57, 92, 64, 0.8);
-                        }}
-                        .fp {{
+                        }
+                        .fp {
                             background-color: rgba(166, 54, 3, 0.8);
-                        }}
-                        .fn {{
+                        }
+                        .fn {
                             background-color: rgba(166, 54, 3, 0.8);
-                        }}
-                        .tp {{
+                        }
+                        .tp {
                             background-color: rgba(57, 92, 64, 0.8);
-                        }}
+                        }
                         </style>
                         <div class="box-container">
                             <div class="cm-box tn">
                                 True Negative<br>
-                                {z_tn:,} instances<br>
-                                ({cm_pct[0, 0]:.1f}% of actual alive)
+                                {:,} instances<br>
+                                ({:.1f}% of actual alive)
                             </div>
                             <div class="cm-box fp">
                                 False Positive<br>
-                                {z_fp:,} instances<br>
-                                ({cm_pct[0, 1]:.1f}% of actual alive)
+                                {:,} instances<br>
+                                ({:.1f}% of actual alive)
                             </div>
                             <div class="cm-box fn">
                                 False Negative<br>
-                                {z_fn:,} instances<br>
-                                ({cm_pct[1, 0]:.1f}% of actual bankrupt)
+                                {:,} instances<br>
+                                ({:.1f}% of actual bankrupt)
                             </div>
                             <div class="cm-box tp">
                                 True Positive<br>
-                                {z_tp:,} instances<br>
-                                ({cm_pct[1, 1]:.1f}% of actual bankrupt)
+                                {:,} instances<br>
+                                ({:.1f}% of actual bankrupt)
                             </div>
                         </div>
-                        """
+                        """.format(
+                            z_tn, cm_pct[0, 0],
+                            z_fp, cm_pct[0, 1],
+                            z_fn, cm_pct[1, 0],
+                            z_tp, cm_pct[1, 1]
+                        )
                         st.markdown(html, unsafe_allow_html=True)
                     
                     with col2:
