@@ -683,10 +683,34 @@ if selected_page == "Overview":
             
             # Create a pie chart with updated colors (green for healthy, red for bankrupt)
             fig, ax = plt.subplots(figsize=(8, 6))
-            ax.pie(bankruptcy_counts['Count'], labels=bankruptcy_counts['Status'], 
-                   autopct='%1.1f%%', startangle=90, colors=['#98ba66', '#ff4c4b'])
-            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
-            plt.title('Distribution of Bankruptcy Status')
+
+            # draw pie, capture text objects
+            wedges, texts, autotexts = ax.pie(
+                bankruptcy_counts['Count'],
+                labels=bankruptcy_counts['Status'],
+                autopct='%1.1f%%',
+                startangle=90,
+                colors=['#98ba66', '#ff4c4b'],
+                labeldistance=1.1  # default ~1.1; we'll nudge one label manually
+            )
+            
+            ax.axis('equal')
+            
+            # bump the overall title up a bit
+            ax.set_title(
+                'Distribution of Bankruptcy Status',
+                y=1.08,      # >1 moves title higher above the chart
+                fontsize=16
+            )
+            
+            # find and pull in the bankrupt label
+            for txt in texts:
+                if txt.get_text().startswith('Bankrupt'):
+                    x, y = txt.get_position()
+                    txt.set_position((0.85 * x, 0.85 * y))  # bring it closer (scale inwards)
+            
+            plt.show()
+
             
             st.pyplot(fig)
 elif selected_page == "Dataset Information":
