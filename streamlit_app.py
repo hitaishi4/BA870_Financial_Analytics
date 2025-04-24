@@ -1047,23 +1047,23 @@ elif selected_page == "ROC Curves":
     
     - **True Positive Rate (Sensitivity / Recall)**  
       Fraction of actual positives correctly identified.  
-      $$\text{TPR} = \frac{\text{True Positives}}{\text{True Positives} + \text{False Negatives}}$$
+      TPR = True Positives ÷ (True Positives + False Negatives)
     
     - **False Positive Rate (1 − Specificity)**  
       Fraction of actual negatives incorrectly flagged as positive.  
-      $$\text{FPR} = \frac{\text{False Positives}}{\text{False Positives} + \text{True Negatives}}$$
+      FPR = False Positives ÷ (False Positives + True Negatives)
     
     - **AUC (Area Under the Curve)**  
       A single-number summary of the ROC curve.  
-      - **AUC = 1.0** is perfect separation.  
-      - **AUC = 0.5** is no better than random guessing.  
+      - AUC = 1.0 is perfect separation.  
+      - AUC = 0.5 is no better than random guessing.  
       - Higher AUC means the model generally achieves a higher TPR for any given FPR.
     
     **Why use ROC curves?**  
-    - **Threshold-independent**: You get a full picture of performance without picking one cut-off.  
-    - **Model comparison**: Overlay multiple ROC curves to see which model stays closer to the top-left.  
+    - **Threshold-independent**: You see performance across all cut-offs without choosing one.  
+    - **Model comparison**: Overlay multiple ROC curves to see which stays closer to the top-left.  
     - **Class imbalance robustness**: AUC is unaffected by the positive/negative ratio.  
-    - **Trade-off visualization**: By scanning along the curve you can choose a region (e.g. low FPR or high TPR) that matches your business priorities.
+    - **Trade-off visualization**: You can pick a region (e.g. very low FPR or very high TPR) that fits your business goals.
     """)
 
 
