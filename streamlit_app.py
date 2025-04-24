@@ -570,6 +570,7 @@ if selected_page == "Overview":
     st.markdown('<p class="section-header">Performance Summary</p>', unsafe_allow_html=True)
     
     # Create metrics dataframe
+    st.markdown("""
     metrics_df = pd.DataFrame({
         'Accuracy': [metrics[model]['accuracy'] for model in metrics],
         'Precision': [metrics[model]['precision'] for model in metrics],
@@ -595,6 +596,7 @@ if selected_page == "Overview":
         st.metric("Best Recall", 
                   f"{metrics_df['Recall'].max():.3f}", 
                   f"{metrics_df['Recall'].idxmax()}")
+    """)
     
     st.markdown("### Quick insights")
     st.markdown(f"""
