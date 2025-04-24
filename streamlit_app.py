@@ -1343,7 +1343,7 @@ elif selected_page == "Confusion Matrices":
     """)
 
 Part 12: Z-Score Analysis Page
-pythonelif selected_page == "Z-Score Analysis":
+elif selected_page == "Z-Score Analysis":
     # Show page header with new centered style
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
     
