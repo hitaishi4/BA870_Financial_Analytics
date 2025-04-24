@@ -1528,7 +1528,7 @@ elif selected_page == "Z-Score Analysis":
                         cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
                         cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
 
-                        # Use regular string with format() to avoid f-string issues
+                        # Simple HTML with no indentation to avoid errors
                         html = """
 <style>
 .cm-box {
@@ -1590,17 +1590,19 @@ elif selected_page == "Z-Score Analysis":
                     
                     with col2:
                         st.markdown("### Z-Score Metrics")
-                        st.markdown(f"""
-                        - **True Negatives (TN)**: {z_tn:,}
-                        - **False Positives (FP)**: {z_fp:,}
-                        - **False Negatives (FN)**: {z_fn:,}
-                        - **True Positives (TP)**: {z_tp:,}
-                        
-                        - **Accuracy**: {z_accuracy:.4f}
-                        - **Precision**: {z_precision:.4f}
-                        - **Recall**: {z_recall:.4f}
-                        - **F1 Score**: {z_f1:.4f}
-                        """)
+                        # Use string formatting without f-strings to avoid errors
+                        metrics_text = """
+- **True Negatives (TN)**: {:,}
+- **False Positives (FP)**: {:,}
+- **False Negatives (FN)**: {:,}
+- **True Positives (TP)**: {:,}
+
+- **Accuracy**: {:.4f}
+- **Precision**: {:.4f}
+- **Recall**: {:.4f}
+- **F1 Score**: {:.4f}
+""".format(z_tn, z_fp, z_fn, z_tp, z_accuracy, z_precision, z_recall, z_f1)
+                        st.markdown(metrics_text)
                     
                     # Provide diagnostic information and recommendations
                     st.markdown("### Diagnostic Information")
