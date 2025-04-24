@@ -110,8 +110,6 @@ td {
 }
 </style>
 """, unsafe_allow_html=True)
-</style>
-""", unsafe_allow_html=True)
 
 # Define column renaming mapping
 rename_map = {
@@ -184,12 +182,6 @@ def load_data():
 
 # Load the data but suppress debug information in the UI
 try:
-    # Temporarily capture and suppress the st.write outputs from load_data
-    import io
-    import contextlib
-    from streamlit.runtime.scriptrunner import get_script_run_ctx
-    from streamlit.runtime.state import session_state
-    
     # Load data without displaying debug messages
     data = load_data()
     
@@ -496,6 +488,9 @@ st.sidebar.title("Other Options")  # Keep sidebar for other options if needed
 # Define pages
 pages = ["Overview", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices", "Z-Score Analysis"]
 
+# Initialize selected_page before using it
+selected_page = "Overview"  # Default to Overview
+
 # Create horizontal navigation using HTML
 nav_html = '<div class="nav-container">'
 for page in pages:
@@ -540,8 +535,9 @@ if selected_page == "Overview":
     ### Project Summary
     
     This project uses the Kaggle American Companies Bankruptcy Prediction dataset (financial data from 1999-2018 for ~8,000 US public companies) to train a machine learning model that predicts bankruptcy filings. Our app showcases the predictions and performance metrics, highlights key financial features, and allows users to explore what-if scenarios.
-
+    """)
     
+    st.markdown("""
     ### Methodology
     
     - **Training Data**: Financial data from 1999-2011
@@ -570,7 +566,6 @@ if selected_page == "Overview":
     st.markdown('<p class="section-header">Performance Summary</p>', unsafe_allow_html=True)
     
     # Create metrics dataframe
-    st.markdown("""
     metrics_df = pd.DataFrame({
         'Accuracy': [metrics[model]['accuracy'] for model in metrics],
         'Precision': [metrics[model]['precision'] for model in metrics],
@@ -596,14 +591,22 @@ if selected_page == "Overview":
         st.metric("Best Recall", 
                   f"{metrics_df['Recall'].max():.3f}", 
                   f"{metrics_df['Recall'].idxmax()}")
-    """)
     
     st.markdown("### Quick insights")
-    st.markdown(f"""
-    - The model with the best overall performance is **{metrics_df['AUC'].idxmax()}** with an AUC of {metrics_df['AUC'].max():.3f}
-    - For identifying bankruptcies (recall), **{metrics_df['Recall'].idxmax()}** performs best with a recall of {metrics_df['Recall'].max():.3f}
-    - The highest precision is achieved by **{metrics_df['Precision'].idxmax()}** at {metrics_df['Precision'].max():.3f}
-    """)
+    
+    # Get best models - using regular string formatting instead of f-strings
+    best_auc_model = metrics_df['AUC'].idxmax()
+    best_auc_value = metrics_df['AUC'].max()
+    best_recall_model = metrics_df['Recall'].idxmax()
+    best_recall_value = metrics_df['Recall'].max()
+    best_precision_model = metrics_df['Precision'].idxmax()
+    best_precision_value = metrics_df['Precision'].max()
+    
+    st.markdown("""
+    - The model with the best overall performance is **{}** with an AUC of {:.3f}
+    - For identifying bankruptcies (recall), **{}** performs best with a recall of {:.3f}
+    - The highest precision is achieved by **{}** at {:.3f}
+    """.format(best_auc_model, best_auc_value, best_recall_model, best_recall_value, best_precision_model, best_precision_value))
 
     # Plot AUC comparison
     st.markdown("### Model AUC Comparison")
