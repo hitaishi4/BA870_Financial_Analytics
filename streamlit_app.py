@@ -1043,16 +1043,29 @@ elif selected_page == "ROC Curves":
     st.markdown("""
     ### Interpreting ROC Curves
     
-    - **AUC (Area Under the Curve)**: The primary metric derived from the ROC curve. Higher values indicate better discriminative ability.
+    The ROC curve shows how well your model distinguishes between the two classes across all possible decision cut-offs by plotting:
     
-    - **Thresholds**: Each point on the ROC curve represents a different classification threshold. Moving along the curve shows the tradeoff between:
-      - True Positive Rate (sensitivity/recall)
-      - False Positive Rate (1 - specificity)
+    - **True Positive Rate (Sensitivity / Recall)**  
+      Fraction of actual positives correctly identified.  
+      $$\text{TPR} = \frac{\text{True Positives}}{\text{True Positives} + \text{False Negatives}}$$
     
-    - **Optimal Threshold**: The optimal threshold depends on the relative costs of false positives vs. false negatives. In bankruptcy prediction:
-      - If missing a bankruptcy is very costly, choose a threshold with higher recall (upper right)
-      - If falsely flagging healthy companies is costly, choose a threshold with higher specificity (lower left)
+    - **False Positive Rate (1 − Specificity)**  
+      Fraction of actual negatives incorrectly flagged as positive.  
+      $$\text{FPR} = \frac{\text{False Positives}}{\text{False Positives} + \text{True Negatives}}$$
+    
+    - **AUC (Area Under the Curve)**  
+      A single-number summary of the ROC curve.  
+      - **AUC = 1.0** is perfect separation.  
+      - **AUC = 0.5** is no better than random guessing.  
+      - Higher AUC means the model generally achieves a higher TPR for any given FPR.
+    
+    **Why use ROC curves?**  
+    - **Threshold-independent**: You get a full picture of performance without picking one cut-off.  
+    - **Model comparison**: Overlay multiple ROC curves to see which model stays closer to the top-left.  
+    - **Class imbalance robustness**: AUC is unaffected by the positive/negative ratio.  
+    - **Trade-off visualization**: By scanning along the curve you can choose a region (e.g. low FPR or high TPR) that matches your business priorities.
     """)
+
 
 elif selected_page == "Feature Importance":
     # Show page header with new centered style
