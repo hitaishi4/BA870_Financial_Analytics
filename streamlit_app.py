@@ -731,19 +731,19 @@ elif selected_page == "Dataset Information":
             """)
                     
         # Show column mapping in a nice table format
-        st.markdown("### Column Mapping")
-        st.markdown("""
-        The table below shows how the original abstract column names are mapped to meaningful financial metrics.
-        These metrics are commonly used in financial analysis and bankruptcy prediction.
-        """)
+        #st.markdown("### Column Mapping")
+        #st.markdown("""
+        #The table below shows how the original abstract column names are mapped to meaningful financial metrics.
+        #These metrics are commonly used in financial analysis and bankruptcy prediction.
+        #""")
         
         # Create a dataframe for the mapping
-        mapping_df = pd.DataFrame({
-            'Original Column': list(rename_map.keys()),
-            'Financial Metric': list(rename_map.values())
-        })
+        #mapping_df = pd.DataFrame({
+        #    'Original Column': list(rename_map.keys()),
+        #    'Financial Metric': list(rename_map.values())
+        #})
         
-        st.dataframe(mapping_df.set_index('Original Column'), use_container_width=True)
+        #st.dataframe(mapping_df.set_index('Original Column'), use_container_width=True)
         
         # Show transformed dataset
         st.markdown("### Transformed Dataset")
