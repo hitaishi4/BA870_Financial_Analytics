@@ -82,6 +82,46 @@ td {
 .sidebar-nav {
     margin-top: 1rem;
 }
+/* Dataset page styles */
+.dataset-card {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e6e9ef;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+.kaggle-link {
+    background-color: #20beff;
+    color: white !important;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-block;
+    margin: 10px 0;
+    text-align: center;
+}
+.kaggle-link:hover {
+    background-color: #0095cc;
+}
+.mapping-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+}
+.mapping-table th, .mapping-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+.mapping-table th {
+    background-color: #395c40;
+    color: white !important;
+}
+.mapping-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -143,21 +183,25 @@ def load_data():
                 if "Bankruptcy" in df.columns and "Bankrupt" not in df.columns:
                     df['Bankrupt'] = df['Bankruptcy']
                 
+                # Keep the original dataframe before renaming
+                df_original = df.copy()
+                
                 # Rename X1-X18 columns to descriptive names if they exist
                 if "X1" in df.columns:
                     df = df.rename(columns=rename_map)
                 
-                return df
+                # Store both original and renamed dataframes
+                return df, df_original
         except Exception:
             continue
     
     # If we reach here, all paths failed - return empty DataFrame without error messages
-    return pd.DataFrame()  # Return empty DataFrame if all paths fail
+    return pd.DataFrame(), pd.DataFrame()  # Return empty DataFrames if all paths fail
 
 # Load the data but suppress debug information in the UI
 try:
     # Load data without displaying debug messages
-    data = load_data()
+    data, data_original = load_data()
     
     # Only show minimal data info in sidebar if data is loaded
     if not data.empty:
@@ -175,6 +219,7 @@ try:
 except Exception as e:
     st.error(f"Error during data initialization")
     data = pd.DataFrame()
+    data_original = pd.DataFrame()
 
 # Set session state to track data loading
 st.session_state['data_loaded'] = not data.empty
@@ -460,8 +505,19 @@ def calculate_zscore(df):
 st.sidebar.title("Navigation")
 
 # Define pages and use radio buttons for navigation
-pages = ["Overview", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices", "Z-Score Analysis"]
+pages = ["Overview", "Dataset Information", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices", "Z-Score Analysis"]
 selected_page = st.sidebar.radio("", pages, key="sidebar_nav")
+
+# Add Kaggle dataset link in sidebar
+st.sidebar.markdown("---")
+st.sidebar.markdown("""
+<h4 style="margin-bottom: 15px;">Resources</h4>
+<a href="https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset" 
+   style="text-decoration: none; display: flex; align-items: center; color: #20beff; font-weight: bold; margin-bottom: 10px;" 
+   target="_blank">
+   <span style="margin-right: 8px;">📊</span> Dataset on Kaggle
+</a>
+""", unsafe_allow_html=True)
 
 # Add some spacing for better visual separation
 st.sidebar.markdown("---")
@@ -476,356 +532,6 @@ if selected_page == "Overview":
     st.markdown("""
     This dashboard presents a comprehensive analysis of bankruptcy prediction models using financial data 
     from American companies. The analysis compares multiple machine learning models and their performance metrics.
-    """)
-
-# Render the selected page
-if selected_page == "Overview":
-    st.markdown('<p class="sub-header">Overview</p>', unsafe_allow_html=True)
-    
-    # Project Summary using a simple string with explicit triple quotes
-    st.markdown("""
-    ### Project Summary
-    
-    This project uses the Kaggle American Companies Bankruptcy Prediction dataset (financial data from 1999-2018 for ~8,000 US public companies) to train a machine learning model that predicts bankruptcy filings. Our app showcases the predictions and performance metrics, highlights key financial features, and allows users to explore what-if scenarios.
-    """)
-    
-    st.markdown("""
-    ### Methodology
-    
-    - **Training Data**: Financial data from 1999-2011
-    - **Testing Data**: Financial data from 2015-2018
-    - **Features**: 18 financial indicators including Current Assets, Net Income, EBITDA, etc.
-    - **Target Variable**: Binary classification (Bankrupt vs Alive)
-    
-    ### Models Analyzed
-    
-    - Decision Tree
-    - Gradient Boosting
-    - Random Forest
-    - Logistic Regression
-    - Support Vector Machine (SVM)
-    - K-Nearest Neighbors (KNN)
-    
-    ### Key Metrics
-    
-    - Accuracy, Precision, Recall, F1 Score
-    - ROC Curves and AUC
-    - Confusion Matrices
-    - Feature Importance
-    """)
-    
-    # Display summary of results
-    st.markdown('<p class="section-header">Performance Summary</p>', unsafe_allow_html=True)
-    
-    # Create metrics dataframe
-    metrics_df = pd.DataFrame({
-        'Accuracy': [metrics[model]['accuracy'] for model in metrics],
-        'Precision': [metrics[model]['precision'] for model in metrics],
-        'Recall': [metrics[model]['recall'] for model in metrics],
-        'F1 Score': [metrics[model]['f1'] for model in metrics],
-        'AUC': [metrics[model]['auc'] for model in metrics]
-    }, index=metrics.keys())
-    
-    # Display in 3 columns
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Best AUC", 
-                  f"{metrics_df['AUC'].max():.3f}", 
-                  f"{metrics_df['AUC'].idxmax()}")
-    
-    with col2:
-        st.metric("Best F1 Score", 
-                  f"{metrics_df['F1 Score'].max():.3f}", 
-                  f"{metrics_df['F1 Score'].idxmax()}")
-    
-    with col3:
-        st.metric("Best Recall", 
-                  f"{metrics_df['Recall'].max():.3f}", 
-                  f"{metrics_df['Recall'].idxmax()}")
-    
-    st.markdown("### Quick insights")
-    
-    # Get best models - using regular string formatting instead of f-strings
-    best_auc_model = metrics_df['AUC'].idxmax()
-    best_auc_value = metrics_df['AUC'].max()
-    best_recall_model = metrics_df['Recall'].idxmax()
-    best_recall_value = metrics_df['Recall'].max()
-    best_precision_model = metrics_df['Precision'].idxmax()
-    best_precision_value = metrics_df['Precision'].max()
-    
-    st.markdown("""
-    - The model with the best overall performance is **{}** with an AUC of {:.3f}
-    - For identifying bankruptcies (recall), **{}** performs best with a recall of {:.3f}
-    - The highest precision is achieved by **{}** at {:.3f}
-    """.format(best_auc_model, best_auc_value, best_recall_model, best_recall_value, best_precision_model, best_precision_value))
-
-    # Plot AUC comparison
-    st.markdown("### Model AUC Comparison")
-    auc_series = metrics_df['AUC'].sort_values(ascending=False)
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    bars = ax.bar(auc_series.index, auc_series.values, color='#395c40')
-    
-    # Add values to bars
-    for bar in bars:
-        height = bar.get_height()
-        ax.text(
-            bar.get_x() + bar.get_width()/2,
-            height + 0.01,
-            f'{height:.3f}',
-            ha='center',
-            va='bottom'
-        )
-    
-    ax.set_ylabel('AUC Score')
-    ax.set_title('Model AUC Comparison')
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    
-    st.pyplot(fig)
-    
-    # Display dataset info if data is loaded
-    if st.session_state.get('data_loaded', False):
-        st.markdown("### Dataset Preview")
-        
-        # Create a clean preview of the data
-        preview_data = data.copy()
-        
-        # Filter to only show relevant columns
-        display_cols = []
-        # Keep bankruptcy info
-        if 'status_label' in preview_data.columns:
-            display_cols.append('status_label')
-        if 'Bankrupt' in preview_data.columns:
-            display_cols.append('Bankrupt')
-        if 'year' in preview_data.columns:
-            display_cols.append('year')
-            
-        # Add key financial metrics if available
-        financial_metrics = ['Current Assets', 'Total Assets', 'Net Income', 'EBIT', 'Market Value']
-        for col in financial_metrics:
-            if col in preview_data.columns:
-                display_cols.append(col)
-        
-        # If we have no display columns, just show the first 5
-        if not display_cols and not preview_data.empty:
-            display_cols = preview_data.columns[:5].tolist()
-            
-        # Show the preview with selected columns
-        st.dataframe(preview_data[display_cols].head())
-        
-        st.markdown("### Dataset Statistics")
-        st.write(f"Number of records: {len(data)}")
-        st.write(f"Number of features: {len(data.columns)}")
-        
-        # Display bankruptcy distribution if available
-        if 'Bankrupt' in data.columns:
-            bankruptcy_counts = data['Bankrupt'].value_counts().reset_index()
-            bankruptcy_counts.columns = ['Status', 'Count']
-            bankruptcy_counts['Status'] = bankruptcy_counts['Status'].map({1: 'Bankrupt', 0: 'Healthy'})
-            
-            # Create a pie chart with updated colors (green for healthy, red for bankrupt)
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.pie(bankruptcy_counts['Count'], labels=bankruptcy_counts['Status'], 
-                   autopct='%1.1f%%', startangle=90, colors=['#98ba66', '#ff4c4b'])
-            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
-            plt.title('Distribution of Bankruptcy Status')
-            
-            st.pyplot(fig)
-
-elif selected_page == "Model Comparison":
-    # Show page header with new centered style
-    st.markdown('<p class="page-header">Model Performance Comparison</p>', unsafe_allow_html=True)
-    
-    # Create metrics dataframe
-    metrics_df = pd.DataFrame({
-        'Accuracy': [metrics[model]['accuracy'] for model in metrics],
-        'Precision': [metrics[model]['precision'] for model in metrics],
-        'Recall': [metrics[model]['recall'] for model in metrics],
-        'F1 Score': [metrics[model]['f1'] for model in metrics],
-        'AUC': [metrics[model]['auc'] for model in metrics]
-    }, index=metrics.keys())
-    
-    # Display metrics table
-    st.markdown("### Performance Metrics")
-    st.dataframe(metrics_df.style.highlight_max(axis=0))
-    
-    # Select metrics to visualize
-    st.markdown("### Metric Comparison")
-    metric_options = ["Accuracy", "Precision", "Recall", "F1 Score", "AUC"]
-    selected_metrics = st.multiselect(
-        "Select metrics to compare", 
-        options=metric_options,
-        default=["Recall", "F1 Score", "AUC"]
-    )
-    
-    if selected_metrics:
-        # Create subplot for each selected metric
-        fig, axes = plt.subplots(1, len(selected_metrics), figsize=(15, 5))
-        
-        # Handle case when only one metric is selected
-        if len(selected_metrics) == 1:
-            axes = [axes]
-        
-        for i, metric in enumerate(selected_metrics):
-            # Sort by metric value
-            sorted_df = metrics_df.sort_values(metric, ascending=False)
-            
-            # Create bar chart
-            bars = axes[i].bar(sorted_df.index, sorted_df[metric], color='#395c40')
-            
-            # Add values to bars
-            for bar in bars:
-                height = bar.get_height()
-                axes[i].text(
-                    bar.get_x() + bar.get_width()/2,
-                    height + 0.01,
-                    f'{height:.3f}',
-                    ha='center',
-                    va='bottom'
-                )
-            
-            axes[i].set_title(metric)
-            axes[i].set_ylim(0, sorted_df[metric].max() * 1.2)
-            axes[i].tick_params(axis='x', rotation=45)
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-    
-    # Add detailed explanation
-    st.markdown("""
-    ### Understanding the Metrics
-    
-    - **Accuracy**: The ratio of correctly predicted instances to the total instances. High accuracy can be misleading with imbalanced classes.
-    
-    - **Precision**: The ratio of correctly predicted positive instances to the total predicted positive instances. High precision means low false positive rate.
-    
-    - **Recall**: The ratio of correctly predicted positive instances to all actual positive instances. High recall means the model captures most bankruptcies.
-    
-    - **F1 Score**: The harmonic mean of precision and recall. It's a good metric when you need to balance precision and recall.
-    
-    - **AUC**: Area Under the ROC Curve. Measures the model's ability to distinguish between classes. Higher values indicate better performance.
-    """)
-    
-    # Class imbalance information
-    st.markdown("### Class Imbalance")
-    st.info("""
-    **Note on Class Imbalance**: The dataset has a significant class imbalance with many more 'alive' companies than 'bankrupt' ones. 
-    This imbalance affects metrics like accuracy, which can be high even when the model performs poorly on the minority class.
-    
-    For bankruptcy prediction, recall is particularly important as the cost of missing a bankruptcy (false negative) is typically higher 
-    than incorrectly predicting bankruptcy (false positive).
-    """)
-
-elif selected_page == "ROC Curves":
-    # Show page header with new centered style
-    st.markdown('<p class="page-header">ROC Curve Analysis</p>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    ### What are ROC Curves?
-    
-    ROC (Receiver Operating Characteristic) curves plot the True Positive Rate against the False Positive Rate at different classification thresholds. They show the tradeoff between sensitivity (recall) and specificity.
-    
-    - A model with perfect classification would have an AUC (Area Under the Curve) of 1.0
-    - A model with no discrimination ability would have an AUC of 0.5 (equivalent to random guessing)
-    """)
-    
-    # Select models to display
-    model_options = list(metrics.keys())
-    selected_models = st.multiselect(
-        "Select models to compare", 
-        options=model_options,
-        default=model_options[:3]  # Default to first 3 models
-    )
-    
-    if selected_models:
-        # Plot ROC curves
-        fig, ax = plt.subplots(figsize=(10, 8))
-        
-        # Add diagonal reference line (random classifier)
-        ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
-        
-        # Color map for different models
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
-        
-        # Plot each selected model
-        for i, model in enumerate(selected_models):
-            fpr = roc_curves[model]['fpr']
-            tpr = roc_curves[model]['tpr']
-            auc = roc_curves[model]['auc']
-            
-            ax.plot(fpr, tpr, lw=2, color=colors[i % len(colors)], 
-                    label=f'{model} (AUC = {auc:.3f})')
-        
-        # Set labels and title
-        ax.set_xlabel('False Positive Rate')
-        ax.set_ylabel('True Positive Rate')
-        ax.set_title('ROC Curves Comparison')
-        
-        # Add legend
-        ax.legend(loc='lower right')
-        
-        # Set limits
-        ax.set_xlim([0.0, 1.0])
-        ax.set_ylim([0.0, 1.05])
-        
-        # Add grid
-        ax.grid(alpha=0.3)
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-    
-    # Show individual model ROC curve
-    st.markdown("### Individual Model ROC Curve")
-    
-    # Select a single model for detailed view
-    single_model = st.selectbox("Select a model", options=model_options)
-    
-    # Plot individual ROC curve
-    fig, ax = plt.subplots(figsize=(8, 6))
-    
-    # Add diagonal reference line
-    ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
-    
-    # Plot ROC curve
-    fpr = roc_curves[single_model]['fpr']
-    tpr = roc_curves[single_model]['tpr']
-    auc = roc_curves[single_model]['auc']
-    
-    ax.plot(fpr, tpr, lw=2, color='#395c40', label=f'ROC curve (AUC = {auc:.3f})')
-    
-    # Set labels and title
-    ax.set_xlabel('False Positive Rate')
-    ax.set_ylabel('True Positive Rate')
-    ax.set_title(f'{single_model} ROC Curve')
-    
-    # Add legend
-    ax.legend(loc='lower right')
-    
-    # Set limits
-    ax.set_xlim([0.0, 1.0])
-    ax.set_ylim([0.0, 1.05])
-    
-    # Add grid
-    ax.grid(alpha=0.3)
-    
-    plt.tight_layout()
-    st.pyplot(fig)
-    
-    # Add explanation
-    st.markdown("""
-    ### Interpreting ROC Curves
-    
-    - **AUC (Area Under the Curve)**: The primary metric derived from the ROC curve. Higher values indicate better discriminative ability.
-    
-    - **Thresholds**: Each point on the ROC curve represents a different classification threshold. Moving along the curve shows the tradeoff between:
-      - True Positive Rate (sensitivity/recall)
-      - False Positive Rate (1 - specificity)
-    
-    - **Optimal Threshold**: The optimal threshold depends on the relative costs of false positives vs. false negatives. In bankruptcy prediction:
-      - If missing a bankruptcy is very costly, choose a threshold with higher recall (upper right)
-      - If falsely flagging healthy companies is costly, choose a threshold with higher specificity (lower left)
     """)
 
 elif selected_page == "Feature Importance":
@@ -1417,9 +1123,597 @@ elif selected_page == "Z-Score Analysis":
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #888888; font-size: 0.8em;">
-Bankruptcy Prediction Dashboard | Created with Streamlit | Data Analysis Based on Financial Metrics
+Bankruptcy Prediction Dashboard | Created with Streamlit | Data Analysis Based on Financial Metrics<br>
+Dataset Source: <a href="https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset" target="_blank">American Companies Bankruptcy Prediction Dataset</a>
 </div>
 """, unsafe_allow_html=True)
 
 # Close main content div for animation
 st.markdown('</div>', unsafe_allow_html=True)
+
+# Render the selected page
+if selected_page == "Overview":
+    st.markdown('<p class="sub-header">Overview</p>', unsafe_allow_html=True)
+    
+    # Project Summary using a simple string with explicit triple quotes
+    st.markdown("""
+    ### Project Summary
+    
+    This project uses the Kaggle American Companies Bankruptcy Prediction dataset (financial data from 1999-2018 for ~8,000 US public companies) to train a machine learning model that predicts bankruptcy filings. Our app showcases the predictions and performance metrics, highlights key financial features, and allows users to explore what-if scenarios.
+    """)
+    
+    st.markdown("""
+    ### Methodology
+    
+    - **Training Data**: Financial data from 1999-2011
+    - **Testing Data**: Financial data from 2015-2018
+    - **Features**: 18 financial indicators including Current Assets, Net Income, EBITDA, etc.
+    - **Target Variable**: Binary classification (Bankrupt vs Alive)
+    
+    ### Models Analyzed
+    
+    - Decision Tree
+    - Gradient Boosting
+    - Random Forest
+    - Logistic Regression
+    - Support Vector Machine (SVM)
+    - K-Nearest Neighbors (KNN)
+    
+    ### Key Metrics
+    
+    - Accuracy, Precision, Recall, F1 Score
+    - ROC Curves and AUC
+    - Confusion Matrices
+    - Feature Importance
+    """)
+    
+    # Display summary of results
+    st.markdown('<p class="section-header">Performance Summary</p>', unsafe_allow_html=True)
+    
+    # Create metrics dataframe
+    metrics_df = pd.DataFrame({
+        'Accuracy': [metrics[model]['accuracy'] for model in metrics],
+        'Precision': [metrics[model]['precision'] for model in metrics],
+        'Recall': [metrics[model]['recall'] for model in metrics],
+        'F1 Score': [metrics[model]['f1'] for model in metrics],
+        'AUC': [metrics[model]['auc'] for model in metrics]
+    }, index=metrics.keys())
+    
+    # Display in 3 columns
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("Best AUC", 
+                  f"{metrics_df['AUC'].max():.3f}", 
+                  f"{metrics_df['AUC'].idxmax()}")
+    
+    with col2:
+        st.metric("Best F1 Score", 
+                  f"{metrics_df['F1 Score'].max():.3f}", 
+                  f"{metrics_df['F1 Score'].idxmax()}")
+    
+    with col3:
+        st.metric("Best Recall", 
+                  f"{metrics_df['Recall'].max():.3f}", 
+                  f"{metrics_df['Recall'].idxmax()}")
+    
+    st.markdown("### Quick insights")
+    
+    # Get best models - using regular string formatting instead of f-strings
+    best_auc_model = metrics_df['AUC'].idxmax()
+    best_auc_value = metrics_df['AUC'].max()
+    best_recall_model = metrics_df['Recall'].idxmax()
+    best_recall_value = metrics_df['Recall'].max()
+    best_precision_model = metrics_df['Precision'].idxmax()
+    best_precision_value = metrics_df['Precision'].max()
+    
+    st.markdown("""
+    - The model with the best overall performance is **{}** with an AUC of {:.3f}
+    - For identifying bankruptcies (recall), **{}** performs best with a recall of {:.3f}
+    - The highest precision is achieved by **{}** at {:.3f}
+    """.format(best_auc_model, best_auc_value, best_recall_model, best_recall_value, best_precision_model, best_precision_value))
+
+    # Plot AUC comparison
+    st.markdown("### Model AUC Comparison")
+    auc_series = metrics_df['AUC'].sort_values(ascending=False)
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bars = ax.bar(auc_series.index, auc_series.values, color='#395c40')
+    
+    # Add values to bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width()/2,
+            height + 0.01,
+            f'{height:.3f}',
+            ha='center',
+            va='bottom'
+        )
+    
+    ax.set_ylabel('AUC Score')
+    ax.set_title('Model AUC Comparison')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    
+    st.pyplot(fig)
+    
+    # Display dataset info if data is loaded
+    if st.session_state.get('data_loaded', False):
+        st.markdown("### Dataset Preview")
+        
+        # Create a clean preview of the data
+        preview_data = data.copy()
+        
+        # Filter to only show relevant columns
+        display_cols = []
+        # Keep bankruptcy info
+        if 'status_label' in preview_data.columns:
+            display_cols.append('status_label')
+        if 'Bankrupt' in preview_data.columns:
+            display_cols.append('Bankrupt')
+        if 'year' in preview_data.columns:
+            display_cols.append('year')
+            
+        # Add key financial metrics if available
+        financial_metrics = ['Current Assets', 'Total Assets', 'Net Income', 'EBIT', 'Market Value']
+        for col in financial_metrics:
+            if col in preview_data.columns:
+                display_cols.append(col)
+        
+        # If we have no display columns, just show the first 5
+        if not display_cols and not preview_data.empty:
+            display_cols = preview_data.columns[:5].tolist()
+            
+        # Show the preview with selected columns
+        st.dataframe(preview_data[display_cols].head())
+        
+        st.markdown("### Dataset Statistics")
+        st.write(f"Number of records: {len(data)}")
+        st.write(f"Number of features: {len(data.columns)}")
+        
+        # Display bankruptcy distribution if available
+        if 'Bankrupt' in data.columns:
+            bankruptcy_counts = data['Bankrupt'].value_counts().reset_index()
+            bankruptcy_counts.columns = ['Status', 'Count']
+            bankruptcy_counts['Status'] = bankruptcy_counts['Status'].map({1: 'Bankrupt', 0: 'Healthy'})
+            
+            # Create a pie chart with updated colors (green for healthy, red for bankrupt)
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.pie(bankruptcy_counts['Count'], labels=bankruptcy_counts['Status'], 
+                   autopct='%1.1f%%', startangle=90, colors=['#98ba66', '#ff4c4b'])
+            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+            plt.title('Distribution of Bankruptcy Status')
+            
+            st.pyplot(fig)
+
+elif selected_page == "Dataset Information":
+    # Show page header with new centered style
+    st.markdown('<p class="page-header">Dataset Information</p>', unsafe_allow_html=True)
+    
+    # Dataset introduction
+    st.markdown("""
+    ### American Companies Bankruptcy Prediction Dataset
+    
+    This dashboard analyzes the American Companies Bankruptcy Prediction dataset, which contains financial data from 
+    approximately 8,000 US public companies between 1999-2018. The dataset is designed to help predict bankruptcy filings
+    based on various financial metrics.
+    """)
+    
+    # Kaggle link with styling
+    st.markdown("""
+    <a href="https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset" 
+       class="kaggle-link" target="_blank">
+       📥 View Dataset on Kaggle
+    </a>
+    """, unsafe_allow_html=True)
+    
+    # Information about the dataset format
+    st.markdown("""
+    ### Dataset Structure
+    
+    The original dataset uses abstract column names (X1-X18) for the financial metrics. In our analysis, 
+    we've mapped these to their actual financial meaning to make the data more interpretable.
+    """)
+    
+    # Display original dataset if available
+    if not data_original.empty:
+        with st.expander("View Original Dataset (First 15 Rows)"):
+            st.dataframe(data_original.head(15))
+        
+        # Show column mapping in a nice table format
+        st.markdown("### Column Mapping")
+        st.markdown("""
+        The table below shows how the original abstract column names are mapped to meaningful financial metrics.
+        These metrics are commonly used in financial analysis and bankruptcy prediction.
+        """)
+        
+        # Create two columns for the mapping display
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div class="dataset-card">
+                <h4>Original Column Names</h4>
+                <ul>
+            """, unsafe_allow_html=True)
+            
+            for col in rename_map.keys():
+                st.markdown(f"<li><strong>{col}</strong></li>", unsafe_allow_html=True)
+                
+            st.markdown("""
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col2:
+            st.markdown("""
+            <div class="dataset-card">
+                <h4>Mapped Financial Metrics</h4>
+                <ul>
+            """, unsafe_allow_html=True)
+            
+            for col in rename_map.values():
+                st.markdown(f"<li><strong>{col}</strong></li>", unsafe_allow_html=True)
+                
+            st.markdown("""
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Show complete mapping table
+        st.markdown("### Complete Column Mapping Table")
+        
+        # Create a dataframe for the mapping
+        mapping_df = pd.DataFrame({
+            'Original Column': list(rename_map.keys()),
+            'Financial Metric': list(rename_map.values())
+        })
+        
+        st.dataframe(mapping_df.set_index('Original Column'), use_container_width=True)
+        
+        # Show transformed dataset
+        st.markdown("### Transformed Dataset")
+        st.markdown("""
+        After applying the column mapping, the dataset becomes much more interpretable. 
+        Below is a preview of the transformed dataset with the first 15 rows.
+        """)
+        
+        with st.expander("View Transformed Dataset (First 15 Rows)"):
+            st.dataframe(data.head(15))
+        
+        # Financial metrics explanation
+        st.markdown("### Financial Metrics Explanation")
+        
+        financial_explanations = {
+            "Current Assets": "Assets that can be converted to cash within one year (cash, accounts receivable, inventory, etc.)",
+            "Cost of Goods Sold": "Direct costs attributable to the production of goods sold by a company",
+            "D&A": "Depreciation & Amortization - allocation of cost of tangible and intangible assets over their useful lives",
+            "EBITDA": "Earnings Before Interest, Taxes, Depreciation, and Amortization - measure of operating performance",
+            "Inventory": "Goods available for sale and raw materials used to produce goods",
+            "Net Income": "Company's total earnings or profit after all expenses and taxes",
+            "Total Receivables": "Money owed to a company by its debtors",
+            "Market Value": "Total value of a company's outstanding shares of stock",
+            "Net Sales": "Gross sales minus returns, allowances, and discounts",
+            "Total Assets": "Sum of all current and non-current assets owned by a company",
+            "Total Long-term Debt": "Loans and financial obligations lasting over one year",
+            "EBIT": "Earnings Before Interest and Taxes - measure of profitability excluding interest and taxes",
+            "Gross Profit": "Net sales minus the cost of goods sold",
+            "Total Current Liabilities": "Obligations due within one year",
+            "Retained Earnings": "Cumulative net income that is retained by the company rather than paid out as dividends",
+            "Total Revenue": "Total money generated from all sources",
+            "Total Liabilities": "Sum of all short-term and long-term obligations",
+            "Total Operating Expenses": "Costs associated with running the day-to-day operations of a business"
+        }
+        
+        # Display explanations in an expandable section
+        with st.expander("Financial Metrics Definitions"):
+            for metric, explanation in financial_explanations.items():
+                st.markdown(f"**{metric}**: {explanation}")
+        
+        # Dataset statistics
+        st.markdown("### Dataset Statistics")
+        
+        # Create 3 columns for key statistics
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Total Companies", f"{len(data):,}")
+        
+        with col2:
+            if 'Bankrupt' in data.columns:
+                bankrupt_count = data['Bankrupt'].sum()
+                st.metric("Bankrupt Companies", f"{bankrupt_count:,}")
+            else:
+                st.metric("Bankrupt Companies", "N/A")
+        
+        with col3:
+            if 'Bankrupt' in data.columns:
+                healthy_count = len(data) - bankrupt_count
+                st.metric("Healthy Companies", f"{healthy_count:,}")
+            else:
+                st.metric("Healthy Companies", "N/A")
+        
+        # Time period information
+        if 'year' in data.columns:
+            years = data['year'].unique()
+            st.markdown(f"**Time Period Covered**: {min(years)} - {max(years)}")
+        
+        # Class imbalance visualization if bankruptcy data is available
+        if 'Bankrupt' in data.columns:
+            st.markdown("### Class Distribution")
+            
+            # Calculate percentages
+            bankrupt_pct = 100 * bankrupt_count / len(data)
+            healthy_pct = 100 - bankrupt_pct
+            
+            # Create horizontal bar chart
+            fig, ax = plt.subplots(figsize=(10, 3))
+            bars = ax.barh(['Healthy', 'Bankrupt'], [healthy_pct, bankrupt_pct], 
+                          color=['#98ba66', '#ff4c4b'])
+            
+            # Add percentage labels
+            for i, bar in enumerate(bars):
+                width = bar.get_width()
+                ax.text(
+                    min(width + 1, 95),  # Ensure label is visible
+                    bar.get_y() + bar.get_height()/2,
+                    f'{width:.1f}%',
+                    va='center',
+                    ha='right' if width > 90 else 'left',
+                    color='white' if width > 90 else 'black',
+                    fontweight='bold'
+                )
+            
+            # Add count labels
+            ax.text(
+                healthy_pct / 2,
+                0,
+                f"{healthy_count:,} companies",
+                ha='center',
+                va='center',
+                fontweight='bold'
+            )
+            
+            ax.text(
+                bankrupt_pct / 2,
+                1,
+                f"{bankrupt_count:,} companies",
+                ha='center',
+                va='center',
+                fontweight='bold'
+            )
+            
+            # Set limits and remove spines
+            ax.set_xlim(0, 100)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.set_xlabel('Percentage')
+            ax.set_title('Class Distribution (Healthy vs Bankrupt Companies)')
+            
+            st.pyplot(fig)
+            
+            # Add note about class imbalance
+            st.info("""
+            **Note on Class Imbalance**: This dataset exhibits significant class imbalance, with a much smaller 
+            proportion of bankrupt companies compared to healthy ones. This imbalance is common in bankruptcy 
+            prediction and requires special techniques such as:
+            
+            - Oversampling the minority class
+            - Undersampling the majority class
+            - Using class weights
+            - Employing specialized metrics (F1-score, AUC) rather than just accuracy
+            """)
+    else:
+        st.error("No data available. Please check that the dataset is properly loaded.")
+        
+    # Additional information about financial analysis and bankruptcy prediction
+    st.markdown("### Financial Analysis for Bankruptcy Prediction")
+    
+    st.markdown("""
+    Financial metrics play a crucial role in predicting corporate bankruptcy. Analysts and researchers 
+    typically use these metrics to calculate financial ratios that serve as indicators of a company's:
+    
+    - **Liquidity**: Ability to meet short-term obligations (Current Ratio, Quick Ratio)
+    - **Profitability**: Ability to generate earnings (ROA, ROE, Profit Margin)
+    - **Leverage**: Debt load and capital structure (Debt-to-Assets, Debt-to-Equity)
+    - **Efficiency**: Asset utilization (Asset Turnover, Inventory Turnover)
+    - **Growth**: Revenue and earnings trends over time
+    
+    These metrics are combined in various ways in bankruptcy prediction models, 
+    from traditional methods like the Altman Z-Score to modern machine learning approaches.
+    """)
+
+elif selected_page == "Model Comparison":
+    # Show page header with new centered style
+    st.markdown('<p class="page-header">Model Performance Comparison</p>', unsafe_allow_html=True)
+    
+    # Create metrics dataframe
+    metrics_df = pd.DataFrame({
+        'Accuracy': [metrics[model]['accuracy'] for model in metrics],
+        'Precision': [metrics[model]['precision'] for model in metrics],
+        'Recall': [metrics[model]['recall'] for model in metrics],
+        'F1 Score': [metrics[model]['f1'] for model in metrics],
+        'AUC': [metrics[model]['auc'] for model in metrics]
+    }, index=metrics.keys())
+    
+    # Display metrics table
+    st.markdown("### Performance Metrics")
+    st.dataframe(metrics_df.style.highlight_max(axis=0))
+    
+    # Select metrics to visualize
+    st.markdown("### Metric Comparison")
+    metric_options = ["Accuracy", "Precision", "Recall", "F1 Score", "AUC"]
+    selected_metrics = st.multiselect(
+        "Select metrics to compare", 
+        options=metric_options,
+        default=["Recall", "F1 Score", "AUC"]
+    )
+    
+    if selected_metrics:
+        # Create subplot for each selected metric
+        fig, axes = plt.subplots(1, len(selected_metrics), figsize=(15, 5))
+        
+        # Handle case when only one metric is selected
+        if len(selected_metrics) == 1:
+            axes = [axes]
+        
+        for i, metric in enumerate(selected_metrics):
+            # Sort by metric value
+            sorted_df = metrics_df.sort_values(metric, ascending=False)
+            
+            # Create bar chart
+            bars = axes[i].bar(sorted_df.index, sorted_df[metric], color='#395c40')
+            
+            # Add values to bars
+            for bar in bars:
+                height = bar.get_height()
+                axes[i].text(
+                    bar.get_x() + bar.get_width()/2,
+                    height + 0.01,
+                    f'{height:.3f}',
+                    ha='center',
+                    va='bottom'
+                )
+            
+            axes[i].set_title(metric)
+            axes[i].set_ylim(0, sorted_df[metric].max() * 1.2)
+            axes[i].tick_params(axis='x', rotation=45)
+        
+        plt.tight_layout()
+        st.pyplot(fig)
+    
+    # Add detailed explanation
+    st.markdown("""
+    ### Understanding the Metrics
+    
+    - **Accuracy**: The ratio of correctly predicted instances to the total instances. High accuracy can be misleading with imbalanced classes.
+    
+    - **Precision**: The ratio of correctly predicted positive instances to the total predicted positive instances. High precision means low false positive rate.
+    
+    - **Recall**: The ratio of correctly predicted positive instances to all actual positive instances. High recall means the model captures most bankruptcies.
+    
+    - **F1 Score**: The harmonic mean of precision and recall. It's a good metric when you need to balance precision and recall.
+    
+    - **AUC**: Area Under the ROC Curve. Measures the model's ability to distinguish between classes. Higher values indicate better performance.
+    """)
+    
+    # Class imbalance information
+    st.markdown("### Class Imbalance")
+    st.info("""
+    **Note on Class Imbalance**: The dataset has a significant class imbalance with many more 'alive' companies than 'bankrupt' ones. 
+    This imbalance affects metrics like accuracy, which can be high even when the model performs poorly on the minority class.
+    
+    For bankruptcy prediction, recall is particularly important as the cost of missing a bankruptcy (false negative) is typically higher 
+    than incorrectly predicting bankruptcy (false positive).
+    """)
+
+elif selected_page == "ROC Curves":
+    # Show page header with new centered style
+    st.markdown('<p class="page-header">ROC Curve Analysis</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    ### What are ROC Curves?
+    
+    ROC (Receiver Operating Characteristic) curves plot the True Positive Rate against the False Positive Rate at different classification thresholds. They show the tradeoff between sensitivity (recall) and specificity.
+    
+    - A model with perfect classification would have an AUC (Area Under the Curve) of 1.0
+    - A model with no discrimination ability would have an AUC of 0.5 (equivalent to random guessing)
+    """)
+    
+    # Select models to display
+    model_options = list(metrics.keys())
+    selected_models = st.multiselect(
+        "Select models to compare", 
+        options=model_options,
+        default=model_options[:3]  # Default to first 3 models
+    )
+    
+    if selected_models:
+        # Plot ROC curves
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Add diagonal reference line (random classifier)
+        ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
+        
+        # Color map for different models
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+        
+        # Plot each selected model
+        for i, model in enumerate(selected_models):
+            fpr = roc_curves[model]['fpr']
+            tpr = roc_curves[model]['tpr']
+            auc = roc_curves[model]['auc']
+            
+            ax.plot(fpr, tpr, lw=2, color=colors[i % len(colors)], 
+                    label=f'{model} (AUC = {auc:.3f})')
+        
+        # Set labels and title
+        ax.set_xlabel('False Positive Rate')
+        ax.set_ylabel('True Positive Rate')
+        ax.set_title('ROC Curves Comparison')
+        
+        # Add legend
+        ax.legend(loc='lower right')
+        
+        # Set limits
+        ax.set_xlim([0.0, 1.0])
+        ax.set_ylim([0.0, 1.05])
+        
+        # Add grid
+        ax.grid(alpha=0.3)
+        
+        plt.tight_layout()
+        st.pyplot(fig)
+    
+    # Show individual model ROC curve
+    st.markdown("### Individual Model ROC Curve")
+    
+    # Select a single model for detailed view
+    single_model = st.selectbox("Select a model", options=model_options)
+    
+    # Plot individual ROC curve
+    fig, ax = plt.subplots(figsize=(8, 6))
+    
+    # Add diagonal reference line
+    ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
+    
+    # Plot ROC curve
+    fpr = roc_curves[single_model]['fpr']
+    tpr = roc_curves[single_model]['tpr']
+    auc = roc_curves[single_model]['auc']
+    
+    ax.plot(fpr, tpr, lw=2, color='#395c40', label=f'ROC curve (AUC = {auc:.3f})')
+    
+    # Set labels and title
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title(f'{single_model} ROC Curve')
+    
+    # Add legend
+    ax.legend(loc='lower right')
+    
+    # Set limits
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    
+    # Add grid
+    ax.grid(alpha=0.3)
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    
+    # Add explanation
+    st.markdown("""
+    ### Interpreting ROC Curves
+    
+    - **AUC (Area Under the Curve)**: The primary metric derived from the ROC curve. Higher values indicate better discriminative ability.
+    
+    - **Thresholds**: Each point on the ROC curve represents a different classification threshold. Moving along the curve shows the tradeoff between:
+      - True Positive Rate (sensitivity/recall)
+      - False Positive Rate (1 - specificity)
+    
+    - **Optimal Threshold**: The optimal threshold depends on the relative costs of false positives vs. false negatives. In bankruptcy prediction:
+      - If missing a bankruptcy is very costly, choose a threshold with higher recall (upper right)
+      - If falsely flagging healthy companies is costly, choose a threshold with higher specificity (lower left)
+    """)
