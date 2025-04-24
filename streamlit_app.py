@@ -683,33 +683,31 @@ if selected_page == "Overview":
             
             # Create a pie chart with updated colors (green for healthy, red for bankrupt)
             fig, ax = plt.subplots(figsize=(8, 6))
-
-            # draw pie, capture text objects
+            
+            # Draw pie without slice labels, but keep percentages
             wedges, texts, autotexts = ax.pie(
                 bankruptcy_counts['Count'],
-                labels=bankruptcy_counts['Status'],
                 autopct='%1.1f%%',
                 startangle=90,
-                colors=['#98ba66', '#ff4c4b'],
-                labeldistance=0.1  # default ~1.1; we'll nudge one label manually
+                colors=['#98ba66', '#ff4c4b']
             )
             
-            ax.axis('equal')
+            ax.axis('equal')  # keep it circular
             
-            # bump the overall title up a bit
-            ax.set_title(
-                'Distribution of Bankruptcy Status',
-                y=1.08,      # >1 moves title higher above the chart
-                fontsize=16
+            # Raise the title
+            ax.set_title('Distribution of Bankruptcy Status', y=1.08, fontsize=16)
+            
+            # Add a legend mapping colors to status
+            ax.legend(
+                wedges,
+                ['Healthy (Alive)', 'Bankrupt (Failed)'],
+                title='Status',
+                loc='center left',
+                bbox_to_anchor=(1.0, 0.5)
             )
-            
-            # find and pull in the bankrupt label
-            for txt in texts:
-                if txt.get_text().startswith('Bankrupt'):
-                    x, y = txt.get_position()
-                    txt.set_position((0.85 * x, 0.85 * y))  # bring it closer (scale inwards)
             
             plt.show()
+
 
             
             st.pyplot(fig)
