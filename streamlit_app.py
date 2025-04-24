@@ -820,52 +820,6 @@ elif selected_page == "Dataset Information":
             bankrupt_pct = 100 * bankrupt_count / len(data)
             alive_pct = 100 - bankrupt_pct
             
-            # Create horizontal bar chart
-            fig, ax = plt.subplots(figsize=(10, 3))
-            bars = ax.barh(['Healthy (Alive)', 'Bankrupt (Failed)'], [alive_pct, bankrupt_pct], 
-                          color=['#98ba66', '#ff4c4b'])
-            
-            # Add percentage labels
-            for i, bar in enumerate(bars):
-                width = bar.get_width()
-                ax.text(
-                    min(width + 1, 95),  # Ensure label is visible
-                    bar.get_y() + bar.get_height()/2,
-                    f'{width:.1f}%',
-                    va='center',
-                    ha='right' if width > 90 else 'left',
-                    color='white' if width > 90 else 'black',
-                    fontweight='bold'
-                )
-            
-            # Add count labels
-            ax.text(
-                alive_pct / 2,
-                0,
-                f"{alive_count:,} companies",
-                ha='center',
-                va='center',
-                fontweight='bold'
-            )
-            
-            ax.text(
-                bankrupt_pct / 2,
-                1,
-                f"{bankrupt_count:,} companies",
-                ha='center',
-                va='center',
-                fontweight='bold'
-            )
-            
-            # Set limits and remove spines
-            ax.set_xlim(0, 100)
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.set_xlabel('Percentage')
-            ax.set_title('Class Distribution (Healthy vs Bankrupt Companies)')
-            
-            st.pyplot(fig)
-            
             # Add note about class imbalance
             st.info("""
             **Note on Class Imbalance**: This dataset exhibits significant class imbalance, with a much smaller 
