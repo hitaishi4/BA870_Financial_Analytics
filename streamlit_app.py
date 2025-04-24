@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 import os
 
 # Page configuration
@@ -12,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for improved styling
+# Custom CSS for styling
 st.markdown("""
 <style>
 .main-header {
@@ -40,7 +41,7 @@ st.markdown("""
     font-size: 1.5rem !important;
     font-weight: bold;
 }
-/* Improve table text visibility - make bold and darker */
+/* Table styling */
 table {
     color: black !important;
     font-weight: 700 !important;
@@ -52,7 +53,6 @@ th {
 td {
     font-weight: 700 !important;
 }
-/* Make all tables more visible */
 .dataframe {
     font-size: 1.1rem !important;
 }
@@ -63,11 +63,15 @@ td {
     border: 1px solid #e6e9ef;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-/* Enhanced sidebar navigation styling */
+/* Sidebar styling */
 .sidebar .sidebar-content {
     background-color: #f8f9fa;
 }
-/* Handle transitions */
+.sidebar-nav {
+    margin-top: 1rem;
+    padding-top: 2rem;
+}
+/* Animation */
 .main-content {
     animation: fadeIn 0.5s ease-in-out;
 }
@@ -75,17 +79,10 @@ td {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
-/* Style the sidebar navigation */
-.css-1d391kg {
-    padding-top: 2rem;
-}
-.sidebar-nav {
-    margin-top: 1rem;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# Define column renaming mapping
+# Column rename mapping
 rename_map = {
     "X1":  "Current Assets",
     "X2":  "Cost of Goods Sold",
@@ -107,95 +104,57 @@ rename_map = {
     "X18": "Total Operating Expenses"
 }
 
-# Improved data loading function with completely suppressed error messages
+# Data loading with caching
 @st.cache_data(show_spinner=False)
 def load_data():
-    """Load data with multiple fallback paths and silent error handling"""
-    # List of possible file paths to try
+    """Load data from multiple possible paths, apply initial mappings."""
     possible_paths = [
-        'data/american_bankruptcy.csv',  # Default path in GitHub repo
-        'american_bankruptcy.csv',       # Root directory
-        '../data/american_bankruptcy.csv', # One level up
-        './american_bankruptcy.csv',     # Explicit current directory
+        Path("data/american_bankruptcy.csv"),
+        Path("american_bankruptcy.csv"),
+        Path("../data/american_bankruptcy.csv"),
+        Path("./american_bankruptcy.csv"),
     ]
-    
-    # Try each path silently without any visible messages
-    for path in possible_paths:
+    for p in possible_paths:
         try:
-            if os.path.exists(path):
-                df = pd.read_csv(path)
-                
-                # Handle status/bankruptcy column - check for various possible column names
+            if p.exists():
+                df = pd.read_csv(p)
+                # Map status_label to Bankrupt
                 if "status_label" in df.columns:
-                    # Map according to the values found
-                    status_values = df['status_label'].unique()
-                    if 'failed' in status_values:
-                        df['Bankrupt'] = df['status_label'].map({'failed': 1, 'alive': 0})
-                    elif 'Bankrupt' in status_values:
-                        df['Bankrupt'] = df['status_label'].map({'Bankrupt': 1, 'Alive': 0})
+                    vals = df["status_label"].unique()
+                    if "failed" in vals:
+                        df["Bankrupt"] = df["status_label"].map({"failed": 1, "alive": 0})
+                    elif "Bankrupt" in vals:
+                        df["Bankrupt"] = df["status_label"].map({"Bankrupt": 1, "Alive": 0})
                     else:
-                        # Default mapping assuming binary classification
-                        df['Bankrupt'] = df['status_label'].apply(
-                            lambda x: 1 if x.lower() in ['failed', 'bankrupt', 'distress', 'default'] else 0
+                        df["Bankrupt"] = df["status_label"].apply(
+                            lambda x: 1 if str(x).lower() in ["failed", "bankrupt", "distress", "default"] else 0
                         )
-                
-                # Also check for Bankruptcy column and rename to Bankrupt if needed
+                # Fallback if a Bankruptcy column exists
                 if "Bankruptcy" in df.columns and "Bankrupt" not in df.columns:
-                    df['Bankrupt'] = df['Bankruptcy']
-                
-                # Rename X1-X18 columns to descriptive names if they exist
+                    df["Bankrupt"] = df["Bankruptcy"]
+                # Rename financial columns
                 if "X1" in df.columns:
                     df = df.rename(columns=rename_map)
-                
                 return df
         except Exception:
             continue
-    
-    # If we reach here, all paths failed - return empty DataFrame without error messages
-    return pd.DataFrame()  # Return empty DataFrame if all paths fail
+    return pd.DataFrame()
 
-# Load the data but suppress debug information in the UI
-try:
-    # Load data without displaying debug messages
-    data = load_data()
-    
-    # Only show minimal data info in sidebar if data is loaded
-    if not data.empty:
-        with st.sidebar.expander("📊 Data Information"):
-            st.write(f"**Rows:** {data.shape[0]}")
-            st.write(f"**Columns:** {data.shape[1]}")
-            
-            # Check for required columns silently
-            required_cols = ['Current Assets', 'Total Current Liabilities', 'Retained Earnings', 
-                            'Total Assets', 'EBIT', 'Market Value', 'Total Liabilities', 'Net Sales']
-            missing_cols = [col for col in required_cols if col not in data.columns]
-            
-            if missing_cols:
-                st.error(f"⚠️ Missing required columns: {', '.join(missing_cols)}")
-except Exception as e:
-    st.error(f"Error during data initialization")
-    data = pd.DataFrame()
+# Load data
+data = load_data()
+st.session_state["data_loaded"] = not data.empty
 
-# Set session state to track data loading
-st.session_state['data_loaded'] = not data.empty
+# Define feature names
+feature_names = list(rename_map.values())
 
-# Define feature names and model results based on your analysis
-feature_names = [
-    "Current Assets", "Cost of Goods Sold", "D&A", "EBITDA",
-    "Inventory", "Net Income", "Total Receivables", "Market Value",
-    "Net Sales", "Total Assets", "Total Long-term Debt", "EBIT",
-    "Gross Profit", "Total Current Liabilities", "Retained Earnings",
-    "Total Revenue", "Total Liabilities", "Total Operating Expenses"
-]
-
-# Define metrics from your analysis with revised AUC values
+# Performance metrics for each model
 metrics = {
     'Decision Tree': {
         'accuracy': 0.8925,
         'precision': 0.0589,
         'recall': 0.2404,
         'f1': 0.0947,
-        'auc': 0.574,  # Updated AUC value
+        'auc': 0.574,
         'confusion_matrix': [[10893, 1102], [218, 69]]
     },
     'Gradient Boosting': {
@@ -203,7 +162,7 @@ metrics = {
         'precision': 0.3846,
         'recall': 0.0348,
         'f1': 0.0639,
-        'auc': 0.827,  # Updated AUC value
+        'auc': 0.827,
         'confusion_matrix': [[11979, 16], [277, 10]]
     },
     'Random Forest': {
@@ -211,7 +170,7 @@ metrics = {
         'precision': 0.3200,
         'recall': 0.0279,
         'f1': 0.0513,
-        'auc': 0.835,  # Updated AUC value
+        'auc': 0.835,
         'confusion_matrix': [[11978, 17], [279, 8]]
     },
     'Logistic Regression': {
@@ -219,7 +178,7 @@ metrics = {
         'precision': 0.3125,
         'recall': 0.0523,
         'f1': 0.0896,
-        'auc': 0.827,  # Updated AUC value
+        'auc': 0.827,
         'confusion_matrix': [[11962, 33], [272, 15]]
     },
     'SVM': {
@@ -227,7 +186,7 @@ metrics = {
         'precision': 0.3333,
         'recall': 0.0070,
         'f1': 0.0137,
-        'auc': 0.590,  # Updated AUC value
+        'auc': 0.590,
         'confusion_matrix': [[11991, 4], [285, 2]]
     },
     'KNN': {
@@ -235,12 +194,12 @@ metrics = {
         'precision': 0.1414,
         'recall': 0.1498,
         'f1': 0.1455,
-        'auc': 0.695,  # Updated AUC value
+        'auc': 0.695,
         'confusion_matrix': [[11734, 261], [244, 43]]
     }
 }
 
-# Feature importance data from your analysis
+# Feature importance values
 feature_importances = {
     'Decision Tree': {
         'Retained Earnings': 0.072059,
@@ -364,1062 +323,395 @@ feature_importances = {
     }
 }
 
-# ROC curve data for each model
+# ROC curve data
 roc_curves = {
     'Decision Tree': {
-        'fpr': [0.0, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        'tpr': [0.0, 0.05, 0.1, 0.15, 0.2, 0.24, 0.32, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+        'fpr': [0.0,0.01,0.05,0.1,0.15,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0],
+        'tpr': [0.0,0.05,0.1,0.15,0.2,0.24,0.32,0.40,0.5,0.6,0.7,0.8,0.9,1.0],
         'auc': 0.574
     },
     'Gradient Boosting': {
-        'fpr': [0.0, 0.001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0],
-        'tpr': [0.0, 0.1, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.9, 0.95, 0.98, 1.0],
+        'fpr': [0.0,0.001,0.005,0.01,0.02,0.03,0.05,0.1,0.2,0.4,0.6,0.8,1.0],
+        'tpr': [0.0,0.1,0.25,0.35,0.45,0.55,0.65,0.75,0.85,0.9,0.95,0.98,1.0],
         'auc': 0.827
     },
     'Random Forest': {
-        'fpr': [0.0, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0],
-        'tpr': [0.0, 0.08, 0.2, 0.3, 0.4, 0.5, 0.65, 0.75, 0.85, 0.92, 0.98, 1.0],
+        'fpr': [0.0,0.001,0.005,0.01,0.02,0.05,0.1,0.2,0.4,0.6,0.8,1.0],
+        'tpr': [0.0,0.08,0.2,0.3,0.4,0.5,0.65,0.75,0.85,0.92,0.98,1.0],
         'auc': 0.835
     },
     'Logistic Regression': {
-        'fpr': [0.0, 0.002, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0],
-        'tpr': [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.65, 0.75, 0.85, 0.92, 0.98, 1.0],
+        'fpr': [0.0,0.002,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9,1.0],
+        'tpr': [0.0,0.1,0.2,0.3,0.4,0.5,0.65,0.75,0.85,0.92,0.98,1.0],
         'auc': 0.827
     },
     'SVM': {
-        'fpr': [0.0, 0.0003, 0.001, 0.005, 0.01, 0.05, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0],
-        'tpr': [0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 1.0],
+        'fpr': [0.0,0.0003,0.001,0.005,0.01,0.05,0.1,0.3,0.5,0.7,0.9,1.0],
+        'tpr': [0.0,0.05,0.1,0.2,0.3,0.5,0.6,0.7,0.8,0.9,0.95,1.0],
         'auc': 0.590
     },
     'KNN': {
-        'fpr': [0.0, 0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0],
-        'tpr': [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.6, 0.75, 0.9, 1.0],
+        'fpr': [0.0,0.02,0.05,0.1,0.15,0.2,0.3,0.4,0.5,0.6,0.8,1.0],
+        'tpr': [0.0,0.05,0.1,0.15,0.2,0.25,0.35,0.45,0.6,0.75,0.9,1.0],
         'auc': 0.695
     }
 }
 
-# Function to calculate Z-Score
+# Z-Score calculation
 def calculate_zscore(df):
-    """Calculate Altman Z-Score for financial data"""
-    # Create a Z-Score dataframe
-    zscore_df = pd.DataFrame(index=df.index)
-    
+    """Calculate Altman Z-Score and classifications."""
     try:
-        # T1 = Working Capital / Total Assets
-        zscore_df['T1'] = (df['Current Assets'] - df['Total Current Liabilities']) / df['Total Assets']
-        
-        # T2 = Retained Earnings / Total Assets
-        zscore_df['T2'] = df['Retained Earnings'] / df['Total Assets']
-        
-        # T3 = EBIT / Total Assets
-        zscore_df['T3'] = df['EBIT'] / df['Total Assets']
-        
-        # T4 = Market Value / Total Liabilities
-        zscore_df['T4'] = df['Market Value'] / df['Total Liabilities']
-        
-        # T5 = Sales / Total Assets
-        zscore_df['T5'] = df['Net Sales'] / df['Total Assets']
-        
-        # Calculate Z-Score
-        zscore_df['Z-Score'] = (1.2 * zscore_df['T1'] + 
-                               1.4 * zscore_df['T2'] + 
-                               3.3 * zscore_df['T3'] + 
-                               0.6 * zscore_df['T4'] + 
-                               0.99 * zscore_df['T5'])
-        
-        # Handle infinite values or NaNs
-        zscore_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-        
-        # Calculate NaN values but don't display in UI
-        num_nan = zscore_df['Z-Score'].isna().sum()
-        
-        # Fill NaN values with mean
-        if num_nan > 0:
-            mean_zscore = zscore_df['Z-Score'].mean()
-            zscore_df['Z-Score'].fillna(mean_zscore, inplace=True)
-        
-        # Classify based on Z-Score with default thresholds
-        distress_threshold = 1.8  # Default distress threshold
-        safe_threshold = 2.99     # Default safe threshold
-        
-        zscore_df['Z-Score Status'] = pd.cut(
-            zscore_df['Z-Score'], 
-            bins=[-float('inf'), distress_threshold, safe_threshold, float('inf')],
+        z = pd.DataFrame(index=df.index)
+        z['T1'] = (df['Current Assets'] - df['Total Current Liabilities']) / df['Total Assets']
+        z['T2'] = df['Retained Earnings'] / df['Total Assets']
+        z['T3'] = df['EBIT'] / df['Total Assets']
+        z['T4'] = df['Market Value'] / df['Total Liabilities']
+        z['T5'] = df['Net Sales'] / df['Total Assets']
+        z['Z-Score'] = (1.2*z['T1'] + 1.4*z['T2'] + 3.3*z['T3'] + 0.6*z['T4'] + 0.99*z['T5'])
+        z.replace([np.inf, -np.inf], np.nan, inplace=True)
+        if z['Z-Score'].isna().any():
+            z['Z-Score'].fillna(z['Z-Score'].mean(), inplace=True)
+        thresholds = (1.8, 2.99)
+        z['Z-Score Status'] = pd.cut(
+            z['Z-Score'],
+            bins=[-np.inf, thresholds[0], thresholds[1], np.inf],
             labels=['Distress', 'Grey', 'Safe']
         )
-        
-        # Convert Z-Score classification to binary (Distress = 1, others = 0)
-        zscore_df['Z-Score Prediction'] = (zscore_df['Z-Score Status'] == 'Distress').astype(int)
-        
-        return zscore_df
-    except Exception as e:
-        st.error(f"Error calculating Z-Score. Please check financial data.")
+        z['Z-Score Prediction'] = (z['Z-Score Status'] == 'Distress').astype(int)
+        return z
+    except Exception:
         return pd.DataFrame()
 
-# Sidebar navigation - using the standard Streamlit sidebar
-st.sidebar.title("Navigation")
-
-# Define pages and use radio buttons for navigation
-pages = ["Overview", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices", "Z-Score Analysis"]
+# Sidebar navigation
+pages = [
+    "Overview",
+    "Data Overview",
+    "Model Comparison",
+    "ROC Curves",
+    "Feature Importance",
+    "Confusion Matrices",
+    "Z-Score Analysis"
+]
 selected_page = st.sidebar.radio("", pages, key="sidebar_nav")
-
-# Add some spacing for better visual separation
 st.sidebar.markdown("---")
-
-# Wrap content in div for animation
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-# Show main header and introduction only on the overview page
+# --- Overview Page ---
 if selected_page == "Overview":
     st.markdown('<p class="main-header">Bankruptcy Prediction Dashboard</p>', unsafe_allow_html=True)
-    
     st.markdown("""
     This dashboard presents a comprehensive analysis of bankruptcy prediction models using financial data 
     from American companies. The analysis compares multiple machine learning models and their performance metrics.
     """)
-
-# Render the selected page
-if selected_page == "Overview":
     st.markdown('<p class="sub-header">Overview</p>', unsafe_allow_html=True)
-    
-    # Project Summary using a simple string with explicit triple quotes
     st.markdown("""
     ### Project Summary
+    This project uses the Kaggle American Companies Bankruptcy Prediction dataset
+    (1999–2018 financial data for ~8,000 US public companies) to train and compare ML models.
     
-    This project uses the Kaggle American Companies Bankruptcy Prediction dataset (financial data from 1999-2018 for ~8,000 US public companies) to train a machine learning model that predicts bankruptcy filings. Our app showcases the predictions and performance metrics, highlights key financial features, and allows users to explore what-if scenarios.
-    """)
-    
-    st.markdown("""
     ### Methodology
-    
-    - **Training Data**: Financial data from 1999-2011
-    - **Testing Data**: Financial data from 2015-2018
-    - **Features**: 18 financial indicators including Current Assets, Net Income, EBITDA, etc.
-    - **Target Variable**: Binary classification (Bankrupt vs Alive)
+    - **Training Data**: 1999–2011  
+    - **Testing Data**: 2015–2018  
+    - **Features**: 18 financial indicators  
+    - **Target**: Binary (Bankrupt vs Alive)
     
     ### Models Analyzed
+    - Decision Tree  
+    - Gradient Boosting  
+    - Random Forest  
+    - Logistic Regression  
+    - SVM  
+    - KNN
     
-    - Decision Tree
-    - Gradient Boosting
-    - Random Forest
-    - Logistic Regression
-    - Support Vector Machine (SVM)
-    - K-Nearest Neighbors (KNN)
-    
-    ### Key Metrics
-    
-    - Accuracy, Precision, Recall, F1 Score
-    - ROC Curves and AUC
-    - Confusion Matrices
+    ### Metrics
+    - Accuracy, Precision, Recall, F1, AUC  
+    - ROC Curves, Confusion Matrices  
     - Feature Importance
     """)
-    
-    # Display summary of results
-    st.markdown('<p class="section-header">Performance Summary</p>', unsafe_allow_html=True)
-    
-    # Create metrics dataframe
+    # Performance summary metrics
     metrics_df = pd.DataFrame({
-        'Accuracy': [metrics[model]['accuracy'] for model in metrics],
-        'Precision': [metrics[model]['precision'] for model in metrics],
-        'Recall': [metrics[model]['recall'] for model in metrics],
-        'F1 Score': [metrics[model]['f1'] for model in metrics],
-        'AUC': [metrics[model]['auc'] for model in metrics]
+        'Accuracy': [metrics[m]['accuracy'] for m in metrics],
+        'Precision': [metrics[m]['precision'] for m in metrics],
+        'Recall': [metrics[m]['recall'] for m in metrics],
+        'F1 Score': [metrics[m]['f1'] for m in metrics],
+        'AUC': [metrics[m]['auc'] for m in metrics]
     }, index=metrics.keys())
-    
-    # Display in 3 columns
     col1, col2, col3 = st.columns(3)
-    
     with col1:
-        st.metric("Best AUC", 
-                  f"{metrics_df['AUC'].max():.3f}", 
-                  f"{metrics_df['AUC'].idxmax()}")
-    
+        st.metric("Best AUC", f"{metrics_df['AUC'].max():.3f}", metrics_df['AUC'].idxmax())
     with col2:
-        st.metric("Best F1 Score", 
-                  f"{metrics_df['F1 Score'].max():.3f}", 
-                  f"{metrics_df['F1 Score'].idxmax()}")
-    
+        st.metric("Best F1", f"{metrics_df['F1 Score'].max():.3f}", metrics_df['F1 Score'].idxmax())
     with col3:
-        st.metric("Best Recall", 
-                  f"{metrics_df['Recall'].max():.3f}", 
-                  f"{metrics_df['Recall'].idxmax()}")
-    
-    st.markdown("### Quick insights")
-    
-    # Get best models - using regular string formatting instead of f-strings
-    best_auc_model = metrics_df['AUC'].idxmax()
-    best_auc_value = metrics_df['AUC'].max()
-    best_recall_model = metrics_df['Recall'].idxmax()
-    best_recall_value = metrics_df['Recall'].max()
-    best_precision_model = metrics_df['Precision'].idxmax()
-    best_precision_value = metrics_df['Precision'].max()
-    
-    st.markdown("""
-    - The model with the best overall performance is **{}** with an AUC of {:.3f}
-    - For identifying bankruptcies (recall), **{}** performs best with a recall of {:.3f}
-    - The highest precision is achieved by **{}** at {:.3f}
-    """.format(best_auc_model, best_auc_value, best_recall_model, best_recall_value, best_precision_model, best_precision_value))
-
-    # Plot AUC comparison
-    st.markdown("### Model AUC Comparison")
-    auc_series = metrics_df['AUC'].sort_values(ascending=False)
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    bars = ax.bar(auc_series.index, auc_series.values, color='#395c40')
-    
-    # Add values to bars
+        st.metric("Best Recall", f"{metrics_df['Recall'].max():.3f}", metrics_df['Recall'].idxmax())
+    st.markdown("### Quick Insights")
+    best_auc_m = metrics_df['AUC'].idxmax(); best_auc_v = metrics_df['AUC'].max()
+    best_rec_m = metrics_df['Recall'].idxmax(); best_rec_v = metrics_df['Recall'].max()
+    best_prec_m = metrics_df['Precision'].idxmax(); best_prec_v = metrics_df['Precision'].max()
+    st.markdown(f"""
+    - **{best_auc_m}** has the highest AUC ({best_auc_v:.3f})  
+    - **{best_rec_m}** leads recall ({best_rec_v:.3f})  
+    - **{best_prec_m}** leads precision ({best_prec_v:.3f})
+    """)
+    # AUC bar chart
+    fig, ax = plt.subplots(figsize=(10,6))
+    bars = ax.bar(metrics_df.index, metrics_df['AUC'], color='#395c40')
     for bar in bars:
-        height = bar.get_height()
-        ax.text(
-            bar.get_x() + bar.get_width()/2,
-            height + 0.01,
-            f'{height:.3f}',
-            ha='center',
-            va='bottom'
-        )
-    
-    ax.set_ylabel('AUC Score')
-    ax.set_title('Model AUC Comparison')
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    
+        ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+0.01, f"{bar.get_height():.3f}", ha='center')
+    ax.set_ylabel("AUC"); ax.set_title("Model AUC Comparison"); plt.xticks(rotation=45, ha='right'); plt.tight_layout()
     st.pyplot(fig)
-    
-    # Display dataset info if data is loaded
-    if st.session_state.get('data_loaded', False):
+    if st.session_state["data_loaded"]:
         st.markdown("### Dataset Preview")
-        
-        # Create a clean preview of the data
-        preview_data = data.copy()
-        
-        # Filter to only show relevant columns
-        display_cols = []
-        # Keep bankruptcy info
-        if 'status_label' in preview_data.columns:
-            display_cols.append('status_label')
-        if 'Bankrupt' in preview_data.columns:
-            display_cols.append('Bankrupt')
-        if 'year' in preview_data.columns:
-            display_cols.append('year')
-            
-        # Add key financial metrics if available
-        financial_metrics = ['Current Assets', 'Total Assets', 'Net Income', 'EBIT', 'Market Value']
-        for col in financial_metrics:
-            if col in preview_data.columns:
-                display_cols.append(col)
-        
-        # If we have no display columns, just show the first 5
-        if not display_cols and not preview_data.empty:
-            display_cols = preview_data.columns[:5].tolist()
-            
-        # Show the preview with selected columns
-        st.dataframe(preview_data[display_cols].head())
-        
-        st.markdown("### Dataset Statistics")
-        st.write(f"Number of records: {len(data)}")
-        st.write(f"Number of features: {len(data.columns)}")
-        
-        # Display bankruptcy distribution if available
+        preview = data.copy()
+        cols = []
+        for c in ['status_label','Bankrupt','year']:
+            if c in preview.columns: cols.append(c)
+        for c in ['Current Assets','Total Assets','Net Income','EBIT','Market Value']:
+            if c in preview.columns: cols.append(c)
+        if not cols: cols = preview.columns[:5].tolist()
+        st.dataframe(preview[cols].head())
+        st.markdown("### Distribution of Bankruptcy Status")
         if 'Bankrupt' in data.columns:
-            bankruptcy_counts = data['Bankrupt'].value_counts().reset_index()
-            bankruptcy_counts.columns = ['Status', 'Count']
-            bankruptcy_counts['Status'] = bankruptcy_counts['Status'].map({1: 'Bankrupt', 0: 'Healthy'})
-            
-            # Create a pie chart with updated colors (green for healthy, red for bankrupt)
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.pie(bankruptcy_counts['Count'], labels=bankruptcy_counts['Status'], 
-                   autopct='%1.1f%%', startangle=90, colors=['#98ba66', '#ff4c4b'])
-            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
-            plt.title('Distribution of Bankruptcy Status')
-            
-            st.pyplot(fig)
+            bc = data['Bankrupt'].value_counts().rename({0:'Healthy',1:'Bankrupt'})
+            fig2, ax2 = plt.subplots(figsize=(6,6))
+            ax2.pie(bc.values, labels=bc.index, autopct='%1.1f%%', startangle=90, colors=['#98ba66','#ff4c4b'])
+            ax2.axis('equal'); plt.title("Bankruptcy vs Healthy"); st.pyplot(fig2)
 
+# --- Data Overview Page ---
+elif selected_page == "Data Overview":
+    st.markdown('<p class="page-header">Data Overview</p>', unsafe_allow_html=True)
+    st.markdown("""
+    **Dataset source:** https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset
+
+    This dataset provides financial metrics for U.S. public companies (1999–2018) for bankruptcy prediction.
+    """)
+    raw_path = Path("data/american_bankruptcy.csv")
+    if not raw_path.exists():
+        st.error("Could not load raw data. Ensure 'data/american_bankruptcy.csv' exists.")
+    else:
+        raw_df = pd.read_csv(raw_path)
+        st.markdown("### Original Column Names")
+        st.write(raw_df.columns.tolist())
+        st.markdown("### First 15 Rows (Original Data)")
+        st.dataframe(raw_df.head(15))
+        st.markdown("### Column Mapping Applied")
+        st.write(rename_map)
+        st.markdown("### Column Names After Mapping")
+        st.write(raw_df.rename(columns=rename_map).columns.tolist())
+        st.markdown("### Financial Metrics Included")
+        st.write(list(rename_map.values()))
+
+# --- Model Comparison Page ---
 elif selected_page == "Model Comparison":
-    # Show page header with new centered style
     st.markdown('<p class="page-header">Model Performance Comparison</p>', unsafe_allow_html=True)
-    
-    # Create metrics dataframe
     metrics_df = pd.DataFrame({
-        'Accuracy': [metrics[model]['accuracy'] for model in metrics],
-        'Precision': [metrics[model]['precision'] for model in metrics],
-        'Recall': [metrics[model]['recall'] for model in metrics],
-        'F1 Score': [metrics[model]['f1'] for model in metrics],
-        'AUC': [metrics[model]['auc'] for model in metrics]
+        'Accuracy': [metrics[m]['accuracy'] for m in metrics],
+        'Precision': [metrics[m]['precision'] for m in metrics],
+        'Recall': [metrics[m]['recall'] for m in metrics],
+        'F1 Score': [metrics[m]['f1'] for m in metrics],
+        'AUC': [metrics[m]['auc'] for m in metrics]
     }, index=metrics.keys())
-    
-    # Display metrics table
     st.markdown("### Performance Metrics")
     st.dataframe(metrics_df.style.highlight_max(axis=0))
-    
-    # Select metrics to visualize
     st.markdown("### Metric Comparison")
-    metric_options = ["Accuracy", "Precision", "Recall", "F1 Score", "AUC"]
-    selected_metrics = st.multiselect(
-        "Select metrics to compare", 
-        options=metric_options,
-        default=["Recall", "F1 Score", "AUC"]
-    )
-    
-    if selected_metrics:
-        # Create subplot for each selected metric
-        fig, axes = plt.subplots(1, len(selected_metrics), figsize=(15, 5))
-        
-        # Handle case when only one metric is selected
-        if len(selected_metrics) == 1:
-            axes = [axes]
-        
-        for i, metric in enumerate(selected_metrics):
-            # Sort by metric value
-            sorted_df = metrics_df.sort_values(metric, ascending=False)
-            
-            # Create bar chart
-            bars = axes[i].bar(sorted_df.index, sorted_df[metric], color='#395c40')
-            
-            # Add values to bars
+    opts = ["Accuracy","Precision","Recall","F1 Score","AUC"]
+    chosen = st.multiselect("Select metrics", opts, default=["Recall","F1 Score","AUC"])
+    if chosen:
+        fig, axes = plt.subplots(1, len(chosen), figsize=(5*len(chosen),5))
+        if len(chosen)==1: axes=[axes]
+        for ax, metric in zip(axes, chosen):
+            df_sorted = metrics_df.sort_values(metric, ascending=False)
+            bars = ax.bar(df_sorted.index, df_sorted[metric], color='#395c40')
             for bar in bars:
-                height = bar.get_height()
-                axes[i].text(
-                    bar.get_x() + bar.get_width()/2,
-                    height + 0.01,
-                    f'{height:.3f}',
-                    ha='center',
-                    va='bottom'
-                )
-            
-            axes[i].set_title(metric)
-            axes[i].set_ylim(0, sorted_df[metric].max() * 1.2)
-            axes[i].tick_params(axis='x', rotation=45)
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-    
-    # Add detailed explanation
+                ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+0.01, f"{bar.get_height():.3f}", ha='center')
+            ax.set_title(metric); ax.tick_params(axis='x', rotation=45)
+        plt.tight_layout(); st.pyplot(fig)
     st.markdown("""
-    ### Understanding the Metrics
-    
-    - **Accuracy**: The ratio of correctly predicted instances to the total instances. High accuracy can be misleading with imbalanced classes.
-    
-    - **Precision**: The ratio of correctly predicted positive instances to the total predicted positive instances. High precision means low false positive rate.
-    
-    - **Recall**: The ratio of correctly predicted positive instances to all actual positive instances. High recall means the model captures most bankruptcies.
-    
-    - **F1 Score**: The harmonic mean of precision and recall. It's a good metric when you need to balance precision and recall.
-    
-    - **AUC**: Area Under the ROC Curve. Measures the model's ability to distinguish between classes. Higher values indicate better performance.
+    **Accuracy** can be misleading on imbalanced data.  
+    **Precision** is TP/(TP+FP).  
+    **Recall** is TP/(TP+FN).  
+    **F1 Score** balances precision & recall.  
+    **AUC** measures discrimination ability.
     """)
-    
-    # Class imbalance information
     st.markdown("### Class Imbalance")
     st.info("""
-    **Note on Class Imbalance**: The dataset has a significant class imbalance with many more 'alive' companies than 'bankrupt' ones. 
-    This imbalance affects metrics like accuracy, which can be high even when the model performs poorly on the minority class.
-    
-    For bankruptcy prediction, recall is particularly important as the cost of missing a bankruptcy (false negative) is typically higher 
-    than incorrectly predicting bankruptcy (false positive).
+    The dataset has many more healthy companies than bankrupt ones.  
+    Recall (identifying bankruptcies) is critical since missing a bankruptcy is costly.
     """)
 
+# --- ROC Curves Page ---
 elif selected_page == "ROC Curves":
-    # Show page header with new centered style
     st.markdown('<p class="page-header">ROC Curve Analysis</p>', unsafe_allow_html=True)
-    
     st.markdown("""
-    ### What are ROC Curves?
-    
-    ROC (Receiver Operating Characteristic) curves plot the True Positive Rate against the False Positive Rate at different classification thresholds. They show the tradeoff between sensitivity (recall) and specificity.
-    
-    - A model with perfect classification would have an AUC (Area Under the Curve) of 1.0
-    - A model with no discrimination ability would have an AUC of 0.5 (equivalent to random guessing)
+    ROC curves plot True Positive Rate vs False Positive Rate at different thresholds.  
+    AUC = 1.0 is perfect; 0.5 is random.
     """)
-    
-    # Select models to display
-    model_options = list(metrics.keys())
-    selected_models = st.multiselect(
-        "Select models to compare", 
-        options=model_options,
-        default=model_options[:3]  # Default to first 3 models
-    )
-    
-    if selected_models:
-        # Plot ROC curves
-        fig, ax = plt.subplots(figsize=(10, 8))
-        
-        # Add diagonal reference line (random classifier)
-        ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
-        
-        # Color map for different models
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
-        
-        # Plot each selected model
-        for i, model in enumerate(selected_models):
-            fpr = roc_curves[model]['fpr']
-            tpr = roc_curves[model]['tpr']
-            auc = roc_curves[model]['auc']
-            
-            ax.plot(fpr, tpr, lw=2, color=colors[i % len(colors)], 
-                    label=f'{model} (AUC = {auc:.3f})')
-        
-        # Set labels and title
-        ax.set_xlabel('False Positive Rate')
-        ax.set_ylabel('True Positive Rate')
-        ax.set_title('ROC Curves Comparison')
-        
-        # Add legend
-        ax.legend(loc='lower right')
-        
-        # Set limits
-        ax.set_xlim([0.0, 1.0])
-        ax.set_ylim([0.0, 1.05])
-        
-        # Add grid
-        ax.grid(alpha=0.3)
-        
-        plt.tight_layout()
+    models = list(metrics.keys())
+    sel = st.multiselect("Select models", models, default=models[:3])
+    if sel:
+        fig, ax = plt.subplots(figsize=(10,8))
+        ax.plot([0,1],[0,1],'--', color='gray', alpha=0.8, label='Random')
+        colors = ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b']
+        for i, m in enumerate(sel):
+            ax.plot(roc_curves[m]['fpr'], roc_curves[m]['tpr'], lw=2,
+                    color=colors[i%len(colors)], label=f"{m} (AUC={roc_curves[m]['auc']:.3f})")
+        ax.set_xlabel("False Positive Rate"); ax.set_ylabel("True Positive Rate")
+        ax.set_title("ROC Curves"); ax.legend(loc='lower right'); ax.grid(alpha=0.3)
         st.pyplot(fig)
-    
-    # Show individual model ROC curve
-    st.markdown("### Individual Model ROC Curve")
-    
-    # Select a single model for detailed view
-    single_model = st.selectbox("Select a model", options=model_options)
-    
-    # Plot individual ROC curve
-    fig, ax = plt.subplots(figsize=(8, 6))
-    
-    # Add diagonal reference line
-    ax.plot([0, 1], [0, 1], linestyle='--', color='gray', alpha=0.8, label='Random')
-    
-    # Plot ROC curve
-    fpr = roc_curves[single_model]['fpr']
-    tpr = roc_curves[single_model]['tpr']
-    auc = roc_curves[single_model]['auc']
-    
-    ax.plot(fpr, tpr, lw=2, color='#395c40', label=f'ROC curve (AUC = {auc:.3f})')
-    
-    # Set labels and title
-    ax.set_xlabel('False Positive Rate')
-    ax.set_ylabel('True Positive Rate')
-    ax.set_title(f'{single_model} ROC Curve')
-    
-    # Add legend
-    ax.legend(loc='lower right')
-    
-    # Set limits
-    ax.set_xlim([0.0, 1.0])
-    ax.set_ylim([0.0, 1.05])
-    
-    # Add grid
-    ax.grid(alpha=0.3)
-    
-    plt.tight_layout()
-    st.pyplot(fig)
-    
-    # Add explanation
+    single = st.selectbox("Single model", models)
+    fig2, ax2 = plt.subplots(figsize=(8,6))
+    ax2.plot([0,1],[0,1],'--', color='gray', alpha=0.8)
+    ax2.plot(roc_curves[single]['fpr'], roc_curves[single]['tpr'], lw=2,
+             color='#395c40', label=f"AUC={roc_curves[single]['auc']:.3f}")
+    ax2.set_xlabel("FPR"); ax2.set_ylabel("TPR"); ax2.set_title(f"{single} ROC")
+    ax2.legend(loc='lower right'); ax2.grid(alpha=0.3)
+    st.pyplot(fig2)
     st.markdown("""
-    ### Interpreting ROC Curves
-    
-    - **AUC (Area Under the Curve)**: The primary metric derived from the ROC curve. Higher values indicate better discriminative ability.
-    
-    - **Thresholds**: Each point on the ROC curve represents a different classification threshold. Moving along the curve shows the tradeoff between:
-      - True Positive Rate (sensitivity/recall)
-      - False Positive Rate (1 - specificity)
-    
-    - **Optimal Threshold**: The optimal threshold depends on the relative costs of false positives vs. false negatives. In bankruptcy prediction:
-      - If missing a bankruptcy is very costly, choose a threshold with higher recall (upper right)
-      - If falsely flagging healthy companies is costly, choose a threshold with higher specificity (lower left)
+    **AUC** measures discrimination.  
+    Choose thresholds based on cost of false negatives vs false positives.
     """)
 
+# --- Feature Importance Page ---
 elif selected_page == "Feature Importance":
-    # Show page header with new centered style
     st.markdown('<p class="page-header">Feature Importance Analysis</p>', unsafe_allow_html=True)
-    
-    # Select model for feature importance
-    model_options = ["Decision Tree", "Gradient Boosting", "Random Forest", "Logistic Regression", "KNN", "SVM"]
-    selected_model = st.selectbox("Select model", model_options)
-    
-    # Get feature importances for selected model
-    importances = pd.Series(feature_importances[selected_model]).sort_values(ascending=False)
-    
-    # Number of features to display
-    n_features = st.slider("Number of top features to display", 5, len(feature_names), 10)
-    
-    # Plot feature importances
-    st.markdown(f"### Top {n_features} Features for {selected_model}")
-    
-    fig, ax = plt.subplots(figsize=(10, 8))
-    
-    # Get subset of data for visualization
-    top_features = importances.head(n_features)
-    
-    # Find max value to set consistent x-limit
-    max_value = importances.max()
-    
-    # Create horizontal bar chart
-    bars = ax.barh(top_features.index[::-1], top_features.values[::-1], color='#395c40')
-    
-    # Add values to bars with consistent positioning
+    models = list(feature_importances.keys())
+    sel = st.selectbox("Select model", models)
+    imp = pd.Series(feature_importances[sel]).sort_values(ascending=False)
+    n = st.slider("Top features", 5, len(imp), 10)
+    st.markdown(f"### Top {n} Features for {sel}")
+    fig, ax = plt.subplots(figsize=(10,8))
+    top = imp.head(n)
+    bars = ax.barh(top.index[::-1], top.values[::-1], color='#395c40')
+    maxv = imp.max()
     for bar in bars:
-        width = bar.get_width()
-        ax.text(
-            width + max_value * 0.05,  # Position text at a fixed offset (5% of max value)
-            bar.get_y() + bar.get_height()/2,
-            f'{width:.3f}',
-            va='center',
-            ha='left'  # Left-align all text for consistency
-        )
-    
-    # Set consistent x-axis limit
-    ax.set_xlim(0, max_value * 1.25)  # Add 25% padding
-    
-    ax.set_xlabel('Importance')
-    ax.set_title(f'{selected_model} Feature Importance')
-    plt.tight_layout()
-    
-    st.pyplot(fig)
-    
-    # Compare top features across models
-    st.markdown("### Top 5 Features Across Models")
-    
-    # Create comparison DataFrame - using main four models with more meaningful importances
-    comparison_models = ["Decision Tree", "Gradient Boosting", "Random Forest", "Logistic Regression"]
-    comparison_df = pd.DataFrame(index=range(1, 6), columns=comparison_models)
-    
-    for model in comparison_models:
-        model_importances = pd.Series(feature_importances[model]).sort_values(ascending=False)
-        for i in range(5):
-            if i < len(model_importances):
-                comparison_df.loc[i+1, model] = model_importances.index[i]
-    
-    st.dataframe(comparison_df)
-    
-    # Add explanation
+        ax.text(bar.get_width()+maxv*0.05, bar.get_y()+bar.get_height()/2,
+                f"{bar.get_width():.3f}", va='center', ha='left')
+    ax.set_xlabel("Importance"); ax.set_title(f"{sel} Feature Importance")
+    plt.tight_layout(); st.pyplot(fig)
+    st.markdown("### Top 5 Across Models")
+    cm = ["Decision Tree","Gradient Boosting","Random Forest","Logistic Regression"]
+    comp = pd.DataFrame(index=range(1,6), columns=cm)
+    for m in cm:
+        top5 = pd.Series(feature_importances[m]).sort_values(ascending=False).index[:5]
+        comp[m] = list(top5)
+    st.dataframe(comp)
     st.markdown("""
-    ### Interpreting Feature Importance
-    
-    Different models calculate feature importance in different ways:
-    
-    - **Decision Tree**: Based on the total reduction of impurity (e.g., Gini impurity) contributed by each feature
-    
-    - **Gradient Boosting & Random Forest**: Based on the average reduction in impurity across all trees
-    
-    - **Logistic Regression**: Based on the absolute values of the coefficients (larger coefficient = more important)
-    
-    - **KNN & SVM**: Based on permutation importance - how much the model's performance decreases when the feature values are randomly shuffled
-    
-    For bankruptcy prediction, important features typically include financial ratios and indicators that capture:
-    - Profitability (Net Income, EBITDA)
-    - Leverage (Debt ratios)
-    - Liquidity (Current Assets, Cash Flow)
-    - Activity (Asset Turnover)
+    - Decision Trees measure impurity reduction  
+    - Ensembles average across trees  
+    - Logistic uses coefficient magnitudes  
+    - KNN/SVM use permutation importance  
     """)
 
+# --- Confusion Matrices Page ---
 elif selected_page == "Confusion Matrices":
-    # Show page header with new centered style
     st.markdown('<p class="page-header">Confusion Matrix Analysis</p>', unsafe_allow_html=True)
-    
-    # Select model for confusion matrix
-    model_options = list(metrics.keys())
-    selected_model = st.selectbox("Select model", model_options)
-    
-    # Get confusion matrix for selected model
-    cm = metrics[selected_model]['confusion_matrix']
-    
-    # Calculate additional metrics
-    tn, fp = cm[0]
-    fn, tp = cm[1]
-    
-    total = tn + fp + fn + tp
-    accuracy = (tn + tp) / total
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
-    
-    # Display confusion matrix in a simpler way without using matplotlib's colormap
-    st.markdown(f"### {selected_model} Confusion Matrix")
-    
-    col1, col2 = st.columns([2, 1])
-    
+    models = list(metrics.keys())
+    sel = st.selectbox("Select model", models)
+    tn, fp = metrics[sel]['confusion_matrix'][0]
+    fn, tp = metrics[sel]['confusion_matrix'][1]
+    total = tn+fp+fn+tp
+    acc = (tn+tp)/total
+    prec = tp/(tp+fp) if tp+fp>0 else 0
+    rec = tp/(tp+fn) if tp+fn>0 else 0
+    f1 = 2*prec*rec/(prec+rec) if prec+rec>0 else 0
+    st.markdown(f"### {sel} Confusion Matrix")
+    col1, col2 = st.columns([2,1])
     with col1:
-        # Use st.dataframe for confusion matrix display
-        cm_df = pd.DataFrame(
-            cm,
-            index=['Actual Alive', 'Actual Bankrupt'],
-            columns=['Predicted Alive', 'Predicted Bankrupt']
-        )
-        
+        cm_df = pd.DataFrame([[tn,fp],[fn,tp]],
+                             index=["Actual Healthy","Actual Bankrupt"],
+                             columns=["Pred Healthy","Pred Bankrupt"])
         st.dataframe(cm_df)
-        
-        # Create a simplified visualization
-        st.markdown("### Visual Representation")
-        
-        # Convert to percentages for better comparison
-        cm_pct = np.zeros((2, 2))
-        cm_pct[0, 0] = 100 * tn / (tn + fp) if (tn + fp) > 0 else 0  # TN as % of actual alive
-        cm_pct[0, 1] = 100 * fp / (tn + fp) if (tn + fp) > 0 else 0  # FP as % of actual alive
-        cm_pct[1, 0] = 100 * fn / (fn + tp) if (fn + tp) > 0 else 0  # FN as % of actual bankrupt
-        cm_pct[1, 1] = 100 * tp / (fn + tp) if (fn + tp) > 0 else 0  # TP as % of actual bankrupt
-        
-        # Create a simple visualization using colored text
+        # Visual boxes
+        pct = np.array([[100*tn/(tn+fp),100*fp/(tn+fp)],[100*fn/(fn+tp),100*tp/(fn+tp)]])
         html = f"""
         <style>
-        .cm-box {{
-            padding: 20px;
-            text-align: center;
-            margin: 5px;
-            font-weight: bold;
-            color: white;
-        }}
-        .box-container {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 10px;
-            margin: 20px 0;
-        }}
-        .tn {{
-            background-color: rgba(57, 92, 64, 0.8);
-        }}
-        .fp {{
-            background-color: rgba(166, 54, 3, 0.8);
-        }}
-        .fn {{
-            background-color: rgba(166, 54, 3, 0.8);
-        }}
-        .tp {{
-            background-color: rgba(57, 92, 64, 0.8);
-        }}
+        .cm-box {{padding:20px;text-align:center;margin:5px;font-weight:bold;color:white;}}
+        .box-container {{display:grid;grid-template:1fr 1fr / 1fr 1fr;gap:10px;margin:20px 0;}}
+        .tn {{background-color:rgba(57,92,64,0.8);}}
+        .fp,.fn {{background-color:rgba(166,54,3,0.8);}}
+        .tp {{background-color:rgba(57,92,64,0.8);}}
         </style>
         <div class="box-container">
-            <div class="cm-box tn">
-                True Negative<br>
-                {tn} instances<br>
-                ({cm_pct[0, 0]:.1f}% of actual alive)
-            </div>
-            <div class="cm-box fp">
-                False Positive<br>
-                {fp} instances<br>
-                ({cm_pct[0, 1]:.1f}% of actual alive)
-            </div>
-            <div class="cm-box fn">
-                False Negative<br>
-                {fn} instances<br>
-                ({cm_pct[1, 0]:.1f}% of actual bankrupt)
-            </div>
-            <div class="cm-box tp">
-                True Positive<br>
-                {tp} instances<br>
-                ({cm_pct[1, 1]:.1f}% of actual bankrupt)
-            </div>
-        </div>
-        """
+          <div class="cm-box tn">TN<br>{tn}<br>({pct[0,0]:.1f}%)</div>
+          <div class="cm-box fp">FP<br>{fp}<br>({pct[0,1]:.1f}%)</div>
+          <div class="cm-box fn">FN<br>{fn}<br>({pct[1,0]:.1f}%)</div>
+          <div class="cm-box tp">TP<br>{tp}<br>({pct[1,1]:.1f}%)</div>
+        </div>"""
         st.markdown(html, unsafe_allow_html=True)
-    
     with col2:
-        st.markdown("### Metrics")
         st.markdown(f"""
-        - **True Negatives (TN)**: {tn}
-        - **False Positives (FP)**: {fp}
-        - **False Negatives (FN)**: {fn}
-        - **True Positives (TP)**: {tp}
-        
-        - **Accuracy**: {accuracy:.4f}
-        - **Precision**: {precision:.4f}
-        - **Recall**: {recall:.4f}
+        - **Accuracy**: {acc:.4f}  
+        - **Precision**: {prec:.4f}  
+        - **Recall**: {rec:.4f}  
         - **F1 Score**: {f1:.4f}
         """)
-    
-    # Add explanation
-    st.markdown("""
-    ### Understanding the Confusion Matrix
-    
-    - **True Negatives (TN)**: Companies correctly predicted as alive
-    - **False Positives (FP)**: Companies incorrectly predicted as bankrupt
-    - **False Negatives (FN)**: Bankrupt companies incorrectly predicted as alive
-    - **True Positives (TP)**: Companies correctly predicted as bankrupt
-    
-    In bankruptcy prediction:
-    - **False Negatives** are particularly costly (missed bankruptcies)
-    - **False Positives** can also be problematic (incorrectly flagging healthy companies)
-    
-    The ideal model would maximize True Positives while minimizing False Negatives.
-    """)
-    
-    # Compare confusion matrices across models
-    st.markdown("### Bankruptcy Detection Comparison")
-    
-    # Calculate metrics for all models
-    comparison_df = pd.DataFrame(
-        index=model_options,
-        columns=["True Positives", "False Negatives", "Detection Rate (%)", "False Alarm Rate (%)"]
-    )
-    
-    for model in model_options:
-        model_cm = metrics[model]['confusion_matrix']
-        tn, fp = model_cm[0]
-        fn, tp = model_cm[1]
-        
-        comparison_df.loc[model, "True Positives"] = tp
-        comparison_df.loc[model, "False Negatives"] = fn
-        comparison_df.loc[model, "Detection Rate (%)"] = 100 * tp / (tp + fn) if (tp + fn) > 0 else 0
-        comparison_df.loc[model, "False Alarm Rate (%)"] = 100 * fp / (tn + fp) if (tn + fp) > 0 else 0
-    
-    # Sort by detection rate
-    comparison_df = comparison_df.sort_values("Detection Rate (%)", ascending=False)
-    
-    st.dataframe(comparison_df)
-    
-    # Add interpretation
-    st.info("""
-    **Note**: A higher detection rate (recall) means the model identifies more bankruptcies, but this often comes
-    at the cost of more false alarms. The Decision Tree has the highest bankruptcy detection rate but also the highest
-    false alarm rate, while SVM has the lowest false alarm rate but also the lowest detection rate.
-    """)
+    st.markdown("### Comparison Across Models")
+    comp = pd.DataFrame(index=models, columns=["TP","FN","Detect Rate (%)","False Alarm (%)"])
+    for m in models:
+        tn2, fp2 = metrics[m]['confusion_matrix'][0]
+        fn2, tp2 = metrics[m]['confusion_matrix'][1]
+        comp.loc[m,"TP"] = tp2
+        comp.loc[m,"FN"] = fn2
+        comp.loc[m,"Detect Rate (%)"] = 100*tp2/(tp2+fn2) if tp2+fn2>0 else 0
+        comp.loc[m,"False Alarm (%)"] = 100*fp2/(tn2+fp2) if tn2+fp2>0 else 0
+    st.dataframe(comp.sort_values("Detect Rate (%)", ascending=False))
+    st.info("High recall catches more bankruptcies but can increase false alarms.")
 
+# --- Z-Score Analysis Page ---
 elif selected_page == "Z-Score Analysis":
-    # Show page header with new centered style
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
-    
     st.markdown("""
-    ### What is the Altman Z-Score?
+    The Altman Z-Score combines five financial ratios:
+    - T1 = (Current Assets – Current Liabilities) / Total Assets  
+    - T2 = Retained Earnings / Total Assets  
+    - T3 = EBIT / Total Assets  
+    - T4 = Market Value / Total Liabilities  
+    - T5 = Net Sales / Total Assets  
+    Z = 1.2·T1 + 1.4·T2 + 3.3·T3 + 0.6·T4 + 0.99·T5
     
-    The Altman Z-Score is a financial formula developed by Edward Altman in 1968 to predict the probability of a company going bankrupt. 
-    It combines multiple financial ratios into a single score that helps assess a company's financial health.
-    
-    **Original Z-score formula:**
-    
-    Z = 1.2*T1 + 1.4*T2 + 3.3*T3 + 0.6*T4 + 0.99*T5
-    
-    Where:
-    - T1 = Working Capital / Total Assets = (Current Assets - Current Liabilities) / Total Assets
-    - T2 = Retained Earnings / Total Assets
-    - T3 = Earnings Before Interest and Taxes / Total Assets
-    - T4 = Market Value of Equity / Book Value of Total Liabilities
-    - T5 = Sales / Total Assets
-    
-    ### Interpretation
-    
-    - Z > 2.99: "Safe" Zone - Company is in good financial health
-    - 1.8 < Z < 2.99: "Grey" Zone - Some financial concerns exist
-    - Z < 1.80: "Distress" Zone - High risk of bankruptcy
+    **Zones:** Z > 2.99 (Safe), 1.8 < Z < 2.99 (Grey), Z < 1.8 (Distress)
     """)
-    
-    # Check if data is loaded
-    if st.session_state.get('data_loaded', False) and not data.empty:
-        # Check for required columns
-        required_cols = ['Current Assets', 'Total Current Liabilities', 'Retained Earnings', 
-                         'Total Assets', 'EBIT', 'Market Value', 'Total Liabilities', 'Net Sales']
-        missing_cols = [col for col in required_cols if col not in data.columns]
-        
-        if missing_cols:
-            st.error(f"Cannot calculate Z-Score: Missing required columns: {', '.join(missing_cols)}")
-            st.warning("Please ensure your data file includes all necessary financial metrics or check that column renaming was successful.")
-            
-            # Display current column mapping for debugging
-            with st.expander("Current Column Mapping"):
-                st.write("Your dataset has these columns:")
-                st.write(", ".join(data.columns.tolist()))
-                
-                st.write("\nExpected mapping from X1-X18:")
-                mapping_df = pd.DataFrame(list(rename_map.items()), columns=["Original", "Expected"])
-                st.dataframe(mapping_df)
-        else:            
-            # Display bankruptcy status distribution in the data
+    if st.session_state["data_loaded"]:
+        req = ['Current Assets','Total Current Liabilities','Retained Earnings',
+               'Total Assets','EBIT','Market Value','Total Liabilities','Net Sales']
+        missing = [c for c in req if c not in data.columns]
+        if missing:
+            st.error(f"Missing columns for Z-Score: {missing}")
+            with st.expander("Column Mapping"):
+                st.write("Dataset columns:", data.columns.tolist())
+                st.write("Expected:", list(rename_map.values()))
+        else:
+            zdf = calculate_zscore(data)
+            with st.expander("Z-Score Stats"):
+                st.write(zdf['Z-Score'].describe())
+                st.write(zdf['Z-Score Status'].value_counts())
             if 'Bankrupt' in data.columns:
-                st.markdown("### Bankruptcy Status in Dataset")
-                bankrupt_count = data['Bankrupt'].sum()
-                alive_count = len(data) - bankrupt_count
-                
-                # Create a bar chart with improved spacing for the count numbers
-                fig, ax = plt.subplots(figsize=(8, 5))
-                bars = ax.bar(['Alive', 'Bankrupt'], [alive_count, bankrupt_count], color=['#395c40', '#a63603'])
-                
-                # Add count labels with more space above and below
-                ax.set_ylim(0, max(alive_count, bankrupt_count) * 1.15)  # Add 15% more space at the top
-                for i, bar in enumerate(bars):
-                    height = bar.get_height()
-                    ax.text(
-                        bar.get_x() + bar.get_width()/2,
-                        height * 1.05,  # Position text higher above the bar
-                        f"{height:,}",  # Format with commas for thousands
-                        ha='center',
-                        va='bottom',
-                        fontsize=14,  # Larger font size
-                        fontweight='bold'  # Bold text
-                    )
-                
-                ax.set_ylabel('Number of Companies')
-                plt.tight_layout()
-                st.pyplot(fig)
-                
-                # Calculate percentage
-                bankrupt_pct = 100 * bankrupt_count / len(data)
-                st.info(f"**Bankruptcy Rate**: {bankrupt_pct:.2f}% ({bankrupt_count:,} out of {len(data):,} companies)")
-                
-                if bankrupt_count == 0:
-                    st.warning("⚠️ No bankrupt companies found in the dataset! Please check your 'Bankrupt' column.")
-            
-            # Calculate Z-Score using default thresholds
-            def calculate_custom_zscore():
-                """Calculate Z-Score with default thresholds"""
-                zscore_df = pd.DataFrame(index=data.index)
-                
-                # T1 = Working Capital / Total Assets
-                zscore_df['T1'] = (data['Current Assets'] - data['Total Current Liabilities']) / data['Total Assets']
-                
-                # T2 = Retained Earnings / Total Assets
-                zscore_df['T2'] = data['Retained Earnings'] / data['Total Assets']
-                
-                # T3 = EBIT / Total Assets
-                zscore_df['T3'] = data['EBIT'] / data['Total Assets']
-                
-                # T4 = Market Value / Total Liabilities
-                zscore_df['T4'] = data['Market Value'] / data['Total Liabilities']
-                
-                # T5 = Sales / Total Assets
-                zscore_df['T5'] = data['Net Sales'] / data['Total Assets']
-                
-                # Calculate Z-Score
-                zscore_df['Z-Score'] = (1.2 * zscore_df['T1'] + 
-                                      1.4 * zscore_df['T2'] + 
-                                      3.3 * zscore_df['T3'] + 
-                                      0.6 * zscore_df['T4'] + 
-                                      0.99 * zscore_df['T5'])
-                
-                # Handle infinite values or NaNs
-                zscore_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-                
-                # Fill NaN values with the median Z-Score
-                zscore_df['Z-Score'].fillna(zscore_df['Z-Score'].median(), inplace=True)
-                
-                # Use default thresholds
-                distress_threshold = 1.8
-                safe_threshold = 2.99
-                
-                # Classify based on Z-Score with default thresholds
-                zscore_df['Z-Score Status'] = pd.cut(
-                    zscore_df['Z-Score'], 
-                    bins=[-float('inf'), distress_threshold, safe_threshold, float('inf')],
-                    labels=['Distress', 'Grey', 'Safe']
-                )
-                
-                # Convert Z-Score classification to binary (Distress = 1, others = 0)
-                zscore_df['Z-Score Prediction'] = (zscore_df['Z-Score Status'] == 'Distress').astype(int)
-                
-                # Add actual bankruptcy status if available
-                if 'Bankrupt' in data.columns:
-                    zscore_df['Actual Status'] = data['Bankrupt']
-                
-                return zscore_df
-            
-            # Use Z-Score calculation with default settings
-            zscore_df = calculate_custom_zscore()
-            
-            if not zscore_df.empty:
-                # Show Z-Score statistics
-                with st.expander("Z-Score Statistics"):
-                    st.write(f"Mean Z-Score: {zscore_df['Z-Score'].mean():.4f}")
-                    st.write(f"Median Z-Score: {zscore_df['Z-Score'].median():.4f}")
-                    st.write(f"Min Z-Score: {zscore_df['Z-Score'].min():.4f}")
-                    st.write(f"Max Z-Score: {zscore_df['Z-Score'].max():.4f}")
-                    
-                    # Count companies in each zone
-                    zone_counts = zscore_df['Z-Score Status'].value_counts()
-                    st.write("Companies in each zone:")
-                    for zone in zone_counts.index:
-                        st.write(f"- {zone}: {zone_counts[zone]:,} companies")
-                
-                # Calculate Z-Score performance metrics
-                if 'Actual Status' in zscore_df.columns:
-                    z_pred = zscore_df['Z-Score Prediction'].values
-                    z_actual = zscore_df['Actual Status'].values
-                    
-                    # Calculate metrics
-                    z_accuracy = (z_pred == z_actual).mean()
-                    z_precision = (z_pred & z_actual).sum() / z_pred.sum() if z_pred.sum() > 0 else 0
-                    z_recall = (z_pred & z_actual).sum() / z_actual.sum() if z_actual.sum() > 0 else 0
-                    z_f1 = 2 * z_precision * z_recall / (z_precision + z_recall) if (z_precision + z_recall) > 0 else 0
-                    
-                    # Calculate Z-Score confusion matrix
-                    z_tn = ((z_pred == 0) & (z_actual == 0)).sum()
-                    z_fp = ((z_pred == 1) & (z_actual == 0)).sum()
-                    z_fn = ((z_pred == 0) & (z_actual == 1)).sum()
-                    z_tp = ((z_pred == 1) & (z_actual == 1)).sum()
-                    
-                    # Compare Z-Score with ML models
-                    st.markdown("### Z-Score vs. Machine Learning Models")
-                    
-                    # Create comparison DataFrame
-                    comparison_data = {
-                        'Model': ['Altman Z-Score'] + list(metrics.keys()),
-                        'Accuracy': [z_accuracy] + [metrics[model]['accuracy'] for model in metrics],
-                        'Precision': [z_precision] + [metrics[model]['precision'] for model in metrics],
-                        'Recall': [z_recall] + [metrics[model]['recall'] for model in metrics],
-                        'F1 Score': [z_f1] + [metrics[model]['f1'] for model in metrics]
-                    }
-                    
-                    comparison_df = pd.DataFrame(comparison_data).set_index('Model')
-                    
-                    # Display comparison
-                    st.dataframe(comparison_df.style.highlight_max(axis=0))
-                    
-                    # Z-Score confusion matrix
-                    col1, col2 = st.columns([2, 1])
-                    
-                    with col1:
-                        st.markdown("### Z-Score Confusion Matrix")
-                        z_cm_df = pd.DataFrame(
-                            [[z_tn, z_fp], [z_fn, z_tp]],
-                            index=['Actual Alive', 'Actual Bankrupt'],
-                            columns=['Predicted Alive', 'Predicted Bankrupt']
-                        )
-                        st.dataframe(z_cm_df)
-                        
-                        # Visual representation of confusion matrix
-                        cm_pct = np.zeros((2, 2))
-                        cm_pct[0, 0] = 100 * z_tn / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
-                        cm_pct[0, 1] = 100 * z_fp / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
-                        cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
-                        cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
-                        
-                        html = f"""
-                        <style>
-                        .cm-box {{
-                            padding: 20px;
-                            text-align: center;
-                            margin: 5px;
-                            font-weight: bold;
-                            color: white;
-                        }}
-                        .box-container {{
-                            display: grid;
-                            grid-template-columns: 1fr 1fr;
-                            grid-template-rows: 1fr 1fr;
-                            gap: 10px;
-                            margin: 20px 0;
-                        }}
-                        .tn {{
-                            background-color: rgba(57, 92, 64, 0.8);
-                        }}
-                        .fp {{
-                            background-color: rgba(166, 54, 3, 0.8);
-                        }}
-                        .fn {{
-                            background-color: rgba(166, 54, 3, 0.8);
-                        }}
-                        .tp {{
-                            background-color: rgba(57, 92, 64, 0.8);
-                        }}
-                        </style>
-                        <div class="box-container">
-                            <div class="cm-box tn">
-                                True Negative<br>
-                                {z_tn:,} instances<br>
-                                ({cm_pct[0, 0]:.1f}% of actual alive)
-                            </div>
-                            <div class="cm-box fp">
-                                False Positive<br>
-                                {z_fp:,} instances<br>
-                                ({cm_pct[0, 1]:.1f}% of actual alive)
-                            </div>
-                            <div class="cm-box fn">
-                                False Negative<br>
-                                {z_fn:,} instances<br>
-                                ({cm_pct[1, 0]:.1f}% of actual bankrupt)
-                            </div>
-                            <div class="cm-box tp">
-                                True Positive<br>
-                                {z_tp:,} instances<br>
-                                ({cm_pct[1, 1]:.1f}% of actual bankrupt)
-                            </div>
-                        </div>
-                        """
-                        st.markdown(html, unsafe_allow_html=True)
-                    
-                    with col2:
-                        st.markdown("### Z-Score Metrics")
-                        st.markdown(f"""
-                        - **True Negatives (TN)**: {z_tn:,}
-                        - **False Positives (FP)**: {z_fp:,}
-                        - **False Negatives (FN)**: {z_fn:,}
-                        - **True Positives (TP)**: {z_tp:,}
-                        
-                        - **Accuracy**: {z_accuracy:.4f}
-                        - **Precision**: {z_precision:.4f}
-                        - **Recall**: {z_recall:.4f}
-                        - **F1 Score**: {z_f1:.4f}
-                        """)
-                    
-                    # Provide diagnostic information and recommendations
-                    st.markdown("### Diagnostic Information")
-                    with st.expander("Z-Score Performance Analysis"):
-                        if z_tp == 0 and z_fn == 0:
-                            st.error("⚠️ No bankrupt companies found in the dataset. Please check your 'Bankrupt' column.")
-                            st.info("Possible issues:")
-                            st.info("1. The 'Bankrupt' column may not be correctly created from 'status_label'")
-                            st.info("2. There might be no actual bankrupt companies in your dataset")
-                            
-                            # Show a sample of the status_label column if it exists
-                            if 'status_label' in data.columns:
-                                st.write("Status label values:", data['status_label'].unique())
-                        
-                        elif z_tp == 0 and z_fn > 0:
-                            st.warning("⚠️ Z-Score is not identifying any bankruptcies correctly.")
-                            
-                            # Get Z-Score statistics for bankrupt companies
-                            bankrupt_zscores = zscore_df[zscore_df['Actual Status'] == 1]['Z-Score']
-                            st.write(f"Z-Score statistics for bankrupt companies:")
-                            st.write(f"- Mean: {bankrupt_zscores.mean():.4f}")
-                            st.write(f"- Median: {bankrupt_zscores.median():.4f}")
-                            st.write(f"- Min: {bankrupt_zscores.min():.4f}")
-                            st.write(f"- Max: {bankrupt_zscores.max():.4f}")
-                
-                # Add financial insight
-                st.markdown("### Financial Insights")
-                st.markdown("""
-                The Altman Z-Score is widely used in financial analysis for predicting bankruptcy risk. It combines multiple financial ratios 
-                that measure profitability, leverage, liquidity, solvency, and activity into a single score.
-                
-                #### Comparing with Machine Learning Models:
-                
-                - **Interpretability**: Z-Score is easy to interpret and communicate to stakeholders
-                - **Simplicity**: Simple linear combination of 5 financial ratios
-                - **Historical validation**: Well-established method with decades of validation
-                
-                #### Limitations:
-                
-                - **Static weights**: Uses fixed coefficients that don't adapt to changing economic conditions
-                - **Limited inputs**: Only uses 5 financial ratios, while ML models can incorporate more features
-                - **No industry adjustment**: Same thresholds for all industries, unlike ML models that can learn industry-specific patterns
-                
-                #### Addressing Common Z-Score Issues:
-                
-                - **Data issues**: Make sure financial data is properly formatted and scaled
-                - **Industry differences**: Consider using different weights for different industries
-                - **Time period mismatch**: Z-Score should be calculated from data prior to bankruptcy
-                - **Threshold adjustment**: Standard thresholds may not work for all datasets, consider adjusting based on your data
-                """)
-            else:
-                st.warning("Could not calculate Z-Score with the available data. Please ensure the dataset contains the necessary financial metrics.")
+                actual = data['Bankrupt']
+                pred = zdf['Z-Score Prediction']
+                acc_z = (pred==actual).mean()
+                prec_z = (pred & actual).sum()/pred.sum() if pred.sum()>0 else 0
+                rec_z = (pred & actual).sum()/actual.sum() if actual.sum()>0 else 0
+                f1_z = 2*prec_z*rec_z/(prec_z+rec_z) if prec_z+rec_z>0 else 0
+                st.markdown("### Z-Score vs ML Models")
+                cmp = pd.DataFrame({
+                    'Model': ['Altman Z-Score']+list(metrics.keys()),
+                    'Accuracy': [acc_z]+[metrics[m]['accuracy'] for m in metrics],
+                    'Precision': [prec_z]+[metrics[m]['precision'] for m in metrics],
+                    'Recall': [rec_z]+[metrics[m]['recall'] for m in metrics],
+                    'F1 Score': [f1_z]+[metrics[m]['f1'] for m in metrics]
+                }).set_index('Model')
+                st.dataframe(cmp.style.highlight_max(axis=0))
+            st.markdown("""
+            **Insights:** Z-Score is simple and interpretable but static.  
+            ML models adapt to data and can handle more features; Z-Score offers transparency.
+            """)
     else:
-        st.error("Please upload your data file. The data file should be named 'american_bankruptcy.csv' and located in the 'data/' directory.")
-        st.info("""
-        The dataset should include the following financial metrics:
-        - Current Assets
-        - Total Current Liabilities
-        - Retained Earnings
-        - Total Assets
-        - EBIT
-        - Market Value
-        - Total Liabilities
-        - Net Sales
-        """)
+        st.error("Data not loaded. Place 'american_bankruptcy.csv' in /data.")
 
 # Footer
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #888888; font-size: 0.8em;">
-Bankruptcy Prediction Dashboard | Created with Streamlit | Data Analysis Based on Financial Metrics
+<div style="text-align:center;color:#888;font-size:0.8em;">
+Bankruptcy Prediction Dashboard | Created with Streamlit
 </div>
 """, unsafe_allow_html=True)
-
-# Close main content div for animation
 st.markdown('</div>', unsafe_allow_html=True)
