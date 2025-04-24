@@ -628,7 +628,7 @@ if selected_page == "Overview":
             # Create a pie chart with updated colors (green for healthy, red for bankrupt)
             fig, ax = plt.subplots(figsize=(8, 6))
             ax.pie(bankruptcy_counts['Count'], labels=bankruptcy_counts['Status'], 
-                   autopct='%1.1f%%', startangle=90, colors=['#395c40', '#a63603'])
+                   autopct='%1.1f%%', startangle=90, colors=['#98ba66', '#ff4c4b'])
             ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
             plt.title('Distribution of Bankruptcy Status')
             
