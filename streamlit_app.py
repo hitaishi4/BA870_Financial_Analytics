@@ -729,28 +729,6 @@ elif selected_page == "Dataset Information":
             - **alive**: Companies that remain operational
             - **failed**: Companies that have gone bankrupt
             """)
-        
-        # Show original column names
-        st.markdown("### Original Column Names")
-        
-        # Create a list of original column names (excluding status_label and other metadata)
-        original_cols = [col for col in data_original.columns if col.startswith('X')]
-        
-        # Display the original columns in a formatted way
-        col1, col2, col3 = st.columns(3)
-        col_idx = 0
-        
-        # Divide columns into 3 columns for better display
-        for i, col in enumerate(original_cols):
-            if i % 3 == 0:
-                with col1:
-                    st.markdown(f"- **{col}**")
-            elif i % 3 == 1:
-                with col2:
-                    st.markdown(f"- **{col}**")
-            else:
-                with col3:
-                    st.markdown(f"- **{col}**")
                     
         # Show column mapping in a nice table format
         st.markdown("### Column Mapping")
