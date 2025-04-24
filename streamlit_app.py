@@ -1597,17 +1597,17 @@ elif selected_page == "Z-Score Analysis":
                     # Provide diagnostic information and recommendations
                     st.markdown("### Diagnostic Information")
                     with st.expander("Z-Score Performance Analysis"):
-                        if z_tp == 0 and z_fn == 0:
-                            st.error("⚠️ No bankrupt companies found in the dataset. Please check your 'Bankrupt' column.")
-                            st.info("Possible issues:")
-                            st.info("1. The 'Bankrupt' column may not be correctly created from 'status_label'")
-                            st.info("2. There might be no actual bankrupt companies in your dataset")
+                        #if z_tp == 0 and z_fn == 0:
+                        #    st.error("⚠️ No bankrupt companies found in the dataset. Please check your 'Bankrupt' column.")
+                        #    st.info("Possible issues:")
+                        #    st.info("1. The 'Bankrupt' column may not be correctly created from 'status_label'")
+                        #    st.info("2. There might be no actual bankrupt companies in your dataset")
                             
                             # Show a sample of the status_label column if it exists
-                            if 'status_label' in data.columns:
-                                st.write("Status label values:", data['status_label'].unique())
+                        #    if 'status_label' in data.columns:
+                        #        st.write("Status label values:", data['status_label'].unique())
                         
-                        elif z_tp == 0 and z_fn > 0:
+                        if z_tp == 0 and z_fn > 0:
                             st.warning("⚠️ Z-Score is not identifying any bankruptcies correctly.")
                             
                             # Get Z-Score statistics for bankrupt companies
