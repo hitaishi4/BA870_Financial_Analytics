@@ -1598,30 +1598,6 @@ elif selected_page == "Z-Score Analysis":
                         - **Recall**: {z_recall:.4f}
                         - **F1 Score**: {z_f1:.4f}
                         """)
-                    
-                    # Provide diagnostic information and recommendations
-                    st.markdown("### Diagnostic Information")
-                    with st.expander("Z-Score Performance Analysis"):
-                        if z_tp == 0 and z_fn == 0:
-                            st.error("⚠️ No bankrupt companies found in the dataset. Please check your 'Bankrupt' column.")
-                            st.info("Possible issues:")
-                            st.info("1. The 'Bankrupt' column may not be correctly created from 'status_label'")
-                            st.info("2. There might be no actual bankrupt companies in your dataset")
-                            
-                            # Show a sample of the status_label column if it exists
-                            if 'status_label' in data.columns:
-                                st.write("Status label values:", data['status_label'].unique())
-                        
-                        elif z_tp == 0 and z_fn > 0:
-                            st.warning("⚠️ Z-Score is not identifying any bankruptcies correctly.")
-                            
-                            # Get Z-Score statistics for bankrupt companies
-                            bankrupt_zscores = zscore_df[zscore_df['Actual Status'] == 1]['Z-Score']
-                            st.write(f"Z-Score statistics for bankrupt companies:")
-                            st.write(f"- Mean: {bankrupt_zscores.mean():.4f}")
-                            st.write(f"- Median: {bankrupt_zscores.median():.4f}")
-                            st.write(f"- Min: {bankrupt_zscores.min():.4f}")
-                            st.write(f"- Max: {bankrupt_zscores.max():.4f}")
                 
                 # Add financial insight
                 st.markdown("### Financial Insights")
