@@ -1106,7 +1106,7 @@ elif selected_page == "Feature Importance":
     st.markdown("### Top 5 Features Across Models")
     
     # Create comparison DataFrame - using main four models with more meaningful importances
-    comparison_models = ["Decision Tree", "Gradient Boosting", "Random Forest", "Logistic Regression"]
+    comparison_models = ["Decision Tree", "Gradient Boosting", "Random Forest", "Logistic Regression","KNN","SVM"]
     comparison_df = pd.DataFrame(index=range(1, 6), columns=comparison_models)
     
     for model in comparison_models:
