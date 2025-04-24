@@ -409,7 +409,7 @@ roc_curves = {
         'tpr': [0.0, 0.2508710801393728, 1.0],
         'auc': 0.574
     },
-    'Gradient_boosting': {
+    'Gradient boosting': {
     'fpr': [
       0.0,
       0.0,
