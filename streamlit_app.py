@@ -1320,6 +1320,8 @@ elif selected_page == "Confusion Matrices":
     false alarm rate, while SVM has the lowest false alarm rate but also the lowest detection rate.
     """)
 
+
+
 elif selected_page == "Z-Score Analysis":
     # Show page header with new centered style
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
@@ -1526,58 +1528,59 @@ elif selected_page == "Z-Score Analysis":
                         cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
                         cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
 
+                        # Use regular string with format() to avoid f-string issues
                         html = """
-                        <style>
-                        .cm-box {
-                            padding: 20px;
-                            text-align: center;
-                            margin: 5px;
-                            font-weight: bold;
-                            color: white;
-                        }
-                        .box-container {
-                            display: grid;
-                            grid-template-columns: 1fr 1fr;
-                            grid-template-rows: 1fr 1fr;
-                            gap: 10px;
-                            margin: 20px 0;
-                        }
-                        .tn {
-                            background-color: rgba(57, 92, 64, 0.8);
-                        }
-                        .fp {
-                            background-color: rgba(166, 54, 3, 0.8);
-                        }
-                        .fn {
-                            background-color: rgba(166, 54, 3, 0.8);
-                        }
-                        .tp {
-                            background-color: rgba(57, 92, 64, 0.8);
-                        }
-                        </style>
-                        <div class="box-container">
-                            <div class="cm-box tn">
-                                True Negative<br>
-                                {:,} instances<br>
-                                ({:.1f}% of actual alive)
-                            </div>
-                            <div class="cm-box fp">
-                                False Positive<br>
-                                {:,} instances<br>
-                                ({:.1f}% of actual alive)
-                            </div>
-                            <div class="cm-box fn">
-                                False Negative<br>
-                                {:,} instances<br>
-                                ({:.1f}% of actual bankrupt)
-                            </div>
-                            <div class="cm-box tp">
-                                True Positive<br>
-                                {:,} instances<br>
-                                ({:.1f}% of actual bankrupt)
-                            </div>
-                        </div>
-                        """.format(
+<style>
+.cm-box {
+    padding: 20px;
+    text-align: center;
+    margin: 5px;
+    font-weight: bold;
+    color: white;
+}
+.box-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    margin: 20px 0;
+}
+.tn {
+    background-color: rgba(57, 92, 64, 0.8);
+}
+.fp {
+    background-color: rgba(166, 54, 3, 0.8);
+}
+.fn {
+    background-color: rgba(166, 54, 3, 0.8);
+}
+.tp {
+    background-color: rgba(57, 92, 64, 0.8);
+}
+</style>
+<div class="box-container">
+    <div class="cm-box tn">
+        True Negative<br>
+        {0:,} instances<br>
+        ({1:.1f}% of actual alive)
+    </div>
+    <div class="cm-box fp">
+        False Positive<br>
+        {2:,} instances<br>
+        ({3:.1f}% of actual alive)
+    </div>
+    <div class="cm-box fn">
+        False Negative<br>
+        {4:,} instances<br>
+        ({5:.1f}% of actual bankrupt)
+    </div>
+    <div class="cm-box tp">
+        True Positive<br>
+        {6:,} instances<br>
+        ({7:.1f}% of actual bankrupt)
+    </div>
+</div>
+""".format(
                             z_tn, cm_pct[0, 0],
                             z_fp, cm_pct[0, 1],
                             z_fn, cm_pct[1, 0],
@@ -1598,6 +1601,30 @@ elif selected_page == "Z-Score Analysis":
                         - **Recall**: {z_recall:.4f}
                         - **F1 Score**: {z_f1:.4f}
                         """)
+                    
+                    # Provide diagnostic information and recommendations
+                    st.markdown("### Diagnostic Information")
+                    with st.expander("Z-Score Performance Analysis"):
+                        if z_tp == 0 and z_fn == 0:
+                            st.error("⚠️ No bankrupt companies found in the dataset. Please check your 'Bankrupt' column.")
+                            st.info("Possible issues:")
+                            st.info("1. The 'Bankrupt' column may not be correctly created from 'status_label'")
+                            st.info("2. There might be no actual bankrupt companies in your dataset")
+                            
+                            # Show a sample of the status_label column if it exists
+                            if 'status_label' in data.columns:
+                                st.write("Status label values:", data['status_label'].unique())
+                        
+                        elif z_tp == 0 and z_fn > 0:
+                            st.warning("⚠️ Z-Score is not identifying any bankruptcies correctly.")
+                            
+                            # Get Z-Score statistics for bankrupt companies
+                            bankrupt_zscores = zscore_df[zscore_df['Actual Status'] == 1]['Z-Score']
+                            st.write(f"Z-Score statistics for bankrupt companies:")
+                            st.write(f"- Mean: {bankrupt_zscores.mean():.4f}")
+                            st.write(f"- Median: {bankrupt_zscores.median():.4f}")
+                            st.write(f"- Min: {bankrupt_zscores.min():.4f}")
+                            st.write(f"- Max: {bankrupt_zscores.max():.4f}")
                 
                 # Add financial insight
                 st.markdown("### Financial Insights")
