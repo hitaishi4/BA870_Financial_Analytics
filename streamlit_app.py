@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from pathlib import Path
 import os
+from pathlib import Path
 
 # Page configuration
 st.set_page_config(
@@ -150,176 +150,95 @@ feature_names = list(rename_map.values())
 # Performance metrics for each model
 metrics = {
     'Decision Tree': {
-        'accuracy': 0.8925,
-        'precision': 0.0589,
-        'recall': 0.2404,
-        'f1': 0.0947,
-        'auc': 0.574,
-        'confusion_matrix': [[10893, 1102], [218, 69]]
+        'accuracy': 0.8925, 'precision': 0.0589, 'recall': 0.2404,
+        'f1': 0.0947, 'auc': 0.574, 'confusion_matrix': [[10893, 1102], [218, 69]]
     },
     'Gradient Boosting': {
-        'accuracy': 0.9761,
-        'precision': 0.3846,
-        'recall': 0.0348,
-        'f1': 0.0639,
-        'auc': 0.827,
-        'confusion_matrix': [[11979, 16], [277, 10]]
+        'accuracy': 0.9761, 'precision': 0.3846, 'recall': 0.0348,
+        'f1': 0.0639, 'auc': 0.827, 'confusion_matrix': [[11979, 16], [277, 10]]
     },
     'Random Forest': {
-        'accuracy': 0.9759,
-        'precision': 0.3200,
-        'recall': 0.0279,
-        'f1': 0.0513,
-        'auc': 0.835,
-        'confusion_matrix': [[11978, 17], [279, 8]]
+        'accuracy': 0.9759, 'precision': 0.3200, 'recall': 0.0279,
+        'f1': 0.0513, 'auc': 0.835, 'confusion_matrix': [[11978, 17], [279, 8]]
     },
     'Logistic Regression': {
-        'accuracy': 0.9752,
-        'precision': 0.3125,
-        'recall': 0.0523,
-        'f1': 0.0896,
-        'auc': 0.827,
-        'confusion_matrix': [[11962, 33], [272, 15]]
+        'accuracy': 0.9752, 'precision': 0.3125, 'recall': 0.0523,
+        'f1': 0.0896, 'auc': 0.827, 'confusion_matrix': [[11962, 33], [272, 15]]
     },
     'SVM': {
-        'accuracy': 0.9765,
-        'precision': 0.3333,
-        'recall': 0.0070,
-        'f1': 0.0137,
-        'auc': 0.590,
-        'confusion_matrix': [[11991, 4], [285, 2]]
+        'accuracy': 0.9765, 'precision': 0.3333, 'recall': 0.0070,
+        'f1': 0.0137, 'auc': 0.590, 'confusion_matrix': [[11991, 4], [285, 2]]
     },
     'KNN': {
-        'accuracy': 0.9589,
-        'precision': 0.1414,
-        'recall': 0.1498,
-        'f1': 0.1455,
-        'auc': 0.695,
-        'confusion_matrix': [[11734, 261], [244, 43]]
+        'accuracy': 0.9589, 'precision': 0.1414, 'recall': 0.1498,
+        'f1': 0.1455, 'auc': 0.695, 'confusion_matrix': [[11734, 261], [244, 43]]
     }
 }
 
 # Feature importance values
 feature_importances = {
     'Decision Tree': {
-        'Retained Earnings': 0.072059,
-        'Market Value': 0.072055,
-        'Inventory': 0.070231,
-        'D&A': 0.068246,
-        'Gross Profit': 0.067548,
-        'Total Receivables': 0.065696,
-        'Current Assets': 0.065387,
-        'Total Long-term Debt': 0.064578,
-        'Total Assets': 0.056883,
-        'Total Current Liabilities': 0.055932,
-        'Net Income': 0.055526,
-        'Total Liabilities': 0.052951,
-        'Cost of Goods Sold': 0.051296,
-        'Total Operating Expenses': 0.047349,
-        'EBITDA': 0.041733,
-        'EBIT': 0.041661,
-        'Total Revenue': 0.027468,
-        'Net Sales': 0.023400
+        'Retained Earnings': 0.072059, 'Market Value': 0.072055,
+        'Inventory': 0.070231, 'D&A': 0.068246, 'Gross Profit': 0.067548,
+        'Total Receivables': 0.065696, 'Current Assets': 0.065387,
+        'Total Long-term Debt': 0.064578, 'Total Assets': 0.056883,
+        'Total Current Liabilities': 0.055932, 'Net Income': 0.055526,
+        'Total Liabilities': 0.052951, 'Cost of Goods Sold': 0.051296,
+        'Total Operating Expenses': 0.047349, 'EBITDA': 0.041733,
+        'EBIT': 0.041661, 'Total Revenue': 0.027468, 'Net Sales': 0.023400
     },
     'Gradient Boosting': {
-        'Total Long-term Debt': 0.115407,
-        'Net Income': 0.113170,
-        'Retained Earnings': 0.088011,
-        'Market Value': 0.083996,
-        'Inventory': 0.075858,
-        'Total Operating Expenses': 0.071508,
-        'Current Assets': 0.068556,
-        'Total Receivables': 0.066965,
-        'Gross Profit': 0.056605,
-        'D&A': 0.045299,
-        'Total Liabilities': 0.040103,
-        'EBITDA': 0.031667,
-        'EBIT': 0.030457,
-        'Net Sales': 0.028807,
-        'Cost of Goods Sold': 0.028534,
-        'Total Current Liabilities': 0.022211,
-        'Total Assets': 0.017786,
-        'Total Revenue': 0.015061
+        'Total Long-term Debt': 0.115407, 'Net Income': 0.113170,
+        'Retained Earnings': 0.088011, 'Market Value': 0.083996,
+        'Inventory': 0.075858, 'Total Operating Expenses': 0.071508,
+        'Current Assets': 0.068556, 'Total Receivables': 0.066965,
+        'Gross Profit': 0.056605, 'D&A': 0.045299, 'Total Liabilities': 0.040103,
+        'EBITDA': 0.031667, 'EBIT': 0.030457, 'Net Sales': 0.028807,
+        'Cost of Goods Sold': 0.028534, 'Total Current Liabilities': 0.022211,
+        'Total Assets': 0.017786, 'Total Revenue': 0.015061
     },
     'Random Forest': {
-        'Retained Earnings': 0.065674,
-        'Market Value': 0.062897,
-        'D&A': 0.061341,
-        'Current Assets': 0.059910,
-        'Total Receivables': 0.059713,
-        'Gross Profit': 0.058533,
-        'Total Liabilities': 0.057575,
-        'Total Assets': 0.057426,
-        'Total Current Liabilities': 0.055479,
-        'Inventory': 0.054929,
-        'Total Long-term Debt': 0.054677,
-        'Net Income': 0.053633,
-        'Cost of Goods Sold': 0.053133,
-        'EBITDA': 0.051601,
-        'EBIT': 0.050618,
-        'Total Operating Expenses': 0.049919,
-        'Total Revenue': 0.046852,
-        'Net Sales': 0.046092
+        'Retained Earnings': 0.065674, 'Market Value': 0.062897,
+        'D&A': 0.061341, 'Current Assets': 0.059910,
+        'Total Receivables': 0.059713, 'Gross Profit': 0.058533,
+        'Total Liabilities': 0.057575, 'Total Assets': 0.057426,
+        'Total Current Liabilities': 0.055479, 'Inventory': 0.054929,
+        'Total Long-term Debt': 0.054677, 'Net Income': 0.053633,
+        'Cost of Goods Sold': 0.053133, 'EBITDA': 0.051601,
+        'EBIT': 0.050618, 'Total Operating Expenses': 0.049919,
+        'Total Revenue': 0.046852, 'Net Sales': 0.046092
     },
     'Logistic Regression': {
-        'Market Value': 1.102307,
-        'Current Assets': 0.976875,
-        'Total Current Liabilities': 0.500875,
-        'EBIT': 0.418057,
-        'Total Long-term Debt': 0.366918,
-        'Total Liabilities': 0.335098,
-        'EBITDA': 0.309482,
-        'Inventory': 0.285948,
-        'Total Assets': 0.231877,
-        'Gross Profit': 0.153693,
-        'Cost of Goods Sold': 0.065107,
-        'Total Operating Expenses': 0.056967,
-        'Retained Earnings': 0.054134,
-        'Total Receivables': 0.040750,
-        'Net Income': 0.019487,
-        'D&A': 0.006214,
-        'Net Sales': 0.001644,
-        'Total Revenue': 0.001644
+        'Market Value': 1.102307, 'Current Assets': 0.976875,
+        'Total Current Liabilities': 0.500875, 'EBIT': 0.418057,
+        'Total Long-term Debt': 0.366918, 'Total Liabilities': 0.335098,
+        'EBITDA': 0.309482, 'Inventory': 0.285948, 'Total Assets': 0.231877,
+        'Gross Profit': 0.153693, 'Cost of Goods Sold': 0.065107,
+        'Total Operating Expenses': 0.056967, 'Retained Earnings': 0.054134,
+        'Total Receivables': 0.040750, 'Net Income': 0.019487,
+        'D&A': 0.006214, 'Net Sales': 0.001644, 'Total Revenue': 0.001644
     },
     'KNN': {
-        'Inventory': 0.048982,
-        'D&A': 0.048754,
-        'Total Long-term Debt': 0.042688,
-        'Gross Profit': 0.039603,
-        'Retained Earnings': 0.030695,
-        'Total Liabilities': 0.023482,
-        'Cost of Goods Sold': 0.005708,
-        'EBIT': 0.004975,
-        'Total Operating Expenses': 0.001930,
-        'Total Revenue': 0.001262,
-        'Net Sales': 0.001262,
-        'Total Current Liabilities': 0.000244,
-        'Current Assets': -0.000090,
-        'Total Receivables': -0.000627,
-        'Total Assets': -0.001449,
-        'EBITDA': -0.001767,
-        'Market Value': -0.002597,
-        'Net Income': -0.004633
+        'Inventory': 0.048982, 'D&A': 0.048754,
+        'Total Long-term Debt': 0.042688, 'Gross Profit': 0.039603,
+        'Retained Earnings': 0.030695, 'Total Liabilities': 0.023482,
+        'Cost of Goods Sold': 0.005708, 'EBIT': 0.004975,
+        'Total Operating Expenses': 0.001930, 'Total Revenue': 0.001262,
+        'Net Sales': 0.001262, 'Total Current Liabilities': 0.000244,
+        'Current Assets': -0.000090, 'Total Receivables': -0.000627,
+        'Total Assets': -0.001449, 'EBITDA': -0.001767,
+        'Market Value': -0.002597, 'Net Income': -0.004633
     },
     'SVM': {
-        'Current Assets': 0.000147,
-        'Total Receivables': 0.000090,
-        'Gross Profit': 0.000008,
-        'Total Revenue': 0.000000,
-        'Cost of Goods Sold': 0.000000,
-        'Net Sales': 0.000000,
-        'Total Assets': 0.000000,
-        'EBITDA': 0.000000,
-        'D&A': 0.000000,
-        'Total Operating Expenses': 0.000000,
-        'Market Value': -0.000008,
-        'Inventory': -0.000008,
-        'Total Current Liabilities': -0.000008,
-        'Net Income': -0.000016,
-        'EBIT': -0.000016,
-        'Total Long-term Debt': -0.000090,
-        'Total Liabilities': -0.000163,
-        'Retained Earnings': -0.000220
+        'Current Assets': 0.000147, 'Total Receivables': 0.000090,
+        'Gross Profit': 0.000008, 'Total Revenue': 0.000000,
+        'Cost of Goods Sold': 0.000000, 'Net Sales': 0.000000,
+        'Total Assets': 0.000000, 'EBITDA': 0.000000,
+        'D&A': 0.000000, 'Total Operating Expenses': 0.000000,
+        'Market Value': -0.000008, 'Inventory': -0.000008,
+        'Total Current Liabilities': -0.000008, 'Net Income': -0.000016,
+        'EBIT': -0.000016, 'Total Long-term Debt': -0.000090,
+        'Total Liabilities': -0.000163, 'Retained Earnings': -0.000220
     }
 }
 
@@ -400,35 +319,16 @@ st.markdown('<div class="main-content">', unsafe_allow_html=True)
 if selected_page == "Overview":
     st.markdown('<p class="main-header">Bankruptcy Prediction Dashboard</p>', unsafe_allow_html=True)
     st.markdown("""
-    This dashboard presents a comprehensive analysis of bankruptcy prediction models using financial data 
-    from American companies. The analysis compares multiple machine learning models and their performance metrics.
+    This dashboard presents a comprehensive analysis of bankruptcy prediction models using financial data from American companies.
     """)
     st.markdown('<p class="sub-header">Overview</p>', unsafe_allow_html=True)
     st.markdown("""
     ### Project Summary
-    This project uses the Kaggle American Companies Bankruptcy Prediction dataset
-    (1999–2018 financial data for ~8,000 US public companies) to train and compare ML models.
-    
-    ### Methodology
-    - **Training Data**: 1999–2011  
-    - **Testing Data**: 2015–2018  
-    - **Features**: 18 financial indicators  
-    - **Target**: Binary (Bankrupt vs Alive)
-    
-    ### Models Analyzed
-    - Decision Tree  
-    - Gradient Boosting  
-    - Random Forest  
-    - Logistic Regression  
-    - SVM  
-    - KNN
-    
-    ### Metrics
-    - Accuracy, Precision, Recall, F1, AUC  
-    - ROC Curves, Confusion Matrices  
-    - Feature Importance
+    - Dataset: Kaggle American Companies Bankruptcy Prediction (1999–2018)
+    - Features: 18 financial indicators
+    - Target: Bankrupt vs Alive
+    - Models: Decision Tree, Gradient Boosting, Random Forest, Logistic Regression, SVM, KNN
     """)
-    # Performance summary metrics
     metrics_df = pd.DataFrame({
         'Accuracy': [metrics[m]['accuracy'] for m in metrics],
         'Precision': [metrics[m]['precision'] for m in metrics],
@@ -443,16 +343,6 @@ if selected_page == "Overview":
         st.metric("Best F1", f"{metrics_df['F1 Score'].max():.3f}", metrics_df['F1 Score'].idxmax())
     with col3:
         st.metric("Best Recall", f"{metrics_df['Recall'].max():.3f}", metrics_df['Recall'].idxmax())
-    st.markdown("### Quick Insights")
-    best_auc_m = metrics_df['AUC'].idxmax(); best_auc_v = metrics_df['AUC'].max()
-    best_rec_m = metrics_df['Recall'].idxmax(); best_rec_v = metrics_df['Recall'].max()
-    best_prec_m = metrics_df['Precision'].idxmax(); best_prec_v = metrics_df['Precision'].max()
-    st.markdown(f"""
-    - **{best_auc_m}** has the highest AUC ({best_auc_v:.3f})  
-    - **{best_rec_m}** leads recall ({best_rec_v:.3f})  
-    - **{best_prec_m}** leads precision ({best_prec_v:.3f})
-    """)
-    # AUC bar chart
     fig, ax = plt.subplots(figsize=(10,6))
     bars = ax.bar(metrics_df.index, metrics_df['AUC'], color='#395c40')
     for bar in bars:
@@ -469,20 +359,12 @@ if selected_page == "Overview":
             if c in preview.columns: cols.append(c)
         if not cols: cols = preview.columns[:5].tolist()
         st.dataframe(preview[cols].head())
-        st.markdown("### Distribution of Bankruptcy Status")
-        if 'Bankrupt' in data.columns:
-            bc = data['Bankrupt'].value_counts().rename({0:'Healthy',1:'Bankrupt'})
-            fig2, ax2 = plt.subplots(figsize=(6,6))
-            ax2.pie(bc.values, labels=bc.index, autopct='%1.1f%%', startangle=90, colors=['#98ba66','#ff4c4b'])
-            ax2.axis('equal'); plt.title("Bankruptcy vs Healthy"); st.pyplot(fig2)
 
 # --- Data Overview Page ---
 elif selected_page == "Data Overview":
     st.markdown('<p class="page-header">Data Overview</p>', unsafe_allow_html=True)
     st.markdown("""
     **Dataset source:** https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset
-
-    This dataset provides financial metrics for U.S. public companies (1999–2018) for bankruptcy prediction.
     """)
     raw_path = Path("data/american_bankruptcy.csv")
     if not raw_path.exists():
@@ -495,10 +377,11 @@ elif selected_page == "Data Overview":
         st.dataframe(raw_df.head(15))
         st.markdown("### Column Mapping Applied")
         st.write(rename_map)
-        st.markdown("### Column Names After Mapping")
-        st.write(raw_df.rename(columns=rename_map).columns.tolist())
-        st.markdown("### Financial Metrics Included")
-        st.write(list(rename_map.values()))
+        mapped_df = raw_df.rename(columns=rename_map)
+        st.markdown("### First 15 Rows (Mapped Data)")
+        st.dataframe(mapped_df.head(15))
+        if mapped_df.isna().sum().sum() == 0:
+            st.markdown("**No missing values detected; the data was inherently clean.**")
 
 # --- Model Comparison Page ---
 elif selected_page == "Model Comparison":
@@ -514,7 +397,7 @@ elif selected_page == "Model Comparison":
     st.dataframe(metrics_df.style.highlight_max(axis=0))
     st.markdown("### Metric Comparison")
     opts = ["Accuracy","Precision","Recall","F1 Score","AUC"]
-    chosen = st.multiselect("Select metrics", opts, default=["Recall","F1 Score","AUC"])
+    chosen = st.multiselect("Select metrics to compare", opts, default=["Recall","F1 Score","AUC"])
     if chosen:
         fig, axes = plt.subplots(1, len(chosen), figsize=(5*len(chosen),5))
         if len(chosen)==1: axes=[axes]
@@ -525,25 +408,12 @@ elif selected_page == "Model Comparison":
                 ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+0.01, f"{bar.get_height():.3f}", ha='center')
             ax.set_title(metric); ax.tick_params(axis='x', rotation=45)
         plt.tight_layout(); st.pyplot(fig)
-    st.markdown("""
-    **Accuracy** can be misleading on imbalanced data.  
-    **Precision** is TP/(TP+FP).  
-    **Recall** is TP/(TP+FN).  
-    **F1 Score** balances precision & recall.  
-    **AUC** measures discrimination ability.
-    """)
-    st.markdown("### Class Imbalance")
-    st.info("""
-    The dataset has many more healthy companies than bankrupt ones.  
-    Recall (identifying bankruptcies) is critical since missing a bankruptcy is costly.
-    """)
 
 # --- ROC Curves Page ---
 elif selected_page == "ROC Curves":
     st.markdown('<p class="page-header">ROC Curve Analysis</p>', unsafe_allow_html=True)
     st.markdown("""
-    ROC curves plot True Positive Rate vs False Positive Rate at different thresholds.  
-    AUC = 1.0 is perfect; 0.5 is random.
+    ROC curves plot True Positive Rate vs False Positive Rate at different thresholds.
     """)
     models = list(metrics.keys())
     sel = st.multiselect("Select models", models, default=models[:3])
@@ -557,18 +427,6 @@ elif selected_page == "ROC Curves":
         ax.set_xlabel("False Positive Rate"); ax.set_ylabel("True Positive Rate")
         ax.set_title("ROC Curves"); ax.legend(loc='lower right'); ax.grid(alpha=0.3)
         st.pyplot(fig)
-    single = st.selectbox("Single model", models)
-    fig2, ax2 = plt.subplots(figsize=(8,6))
-    ax2.plot([0,1],[0,1],'--', color='gray', alpha=0.8)
-    ax2.plot(roc_curves[single]['fpr'], roc_curves[single]['tpr'], lw=2,
-             color='#395c40', label=f"AUC={roc_curves[single]['auc']:.3f}")
-    ax2.set_xlabel("FPR"); ax2.set_ylabel("TPR"); ax2.set_title(f"{single} ROC")
-    ax2.legend(loc='lower right'); ax2.grid(alpha=0.3)
-    st.pyplot(fig2)
-    st.markdown("""
-    **AUC** measures discrimination.  
-    Choose thresholds based on cost of false negatives vs false positives.
-    """)
 
 # --- Feature Importance Page ---
 elif selected_page == "Feature Importance":
@@ -576,7 +434,7 @@ elif selected_page == "Feature Importance":
     models = list(feature_importances.keys())
     sel = st.selectbox("Select model", models)
     imp = pd.Series(feature_importances[sel]).sort_values(ascending=False)
-    n = st.slider("Top features", 5, len(imp), 10)
+    n = st.slider("Number of top features to display", 5, len(imp), 10)
     st.markdown(f"### Top {n} Features for {sel}")
     fig, ax = plt.subplots(figsize=(10,8))
     top = imp.head(n)
@@ -587,19 +445,6 @@ elif selected_page == "Feature Importance":
                 f"{bar.get_width():.3f}", va='center', ha='left')
     ax.set_xlabel("Importance"); ax.set_title(f"{sel} Feature Importance")
     plt.tight_layout(); st.pyplot(fig)
-    st.markdown("### Top 5 Across Models")
-    cm = ["Decision Tree","Gradient Boosting","Random Forest","Logistic Regression"]
-    comp = pd.DataFrame(index=range(1,6), columns=cm)
-    for m in cm:
-        top5 = pd.Series(feature_importances[m]).sort_values(ascending=False).index[:5]
-        comp[m] = list(top5)
-    st.dataframe(comp)
-    st.markdown("""
-    - Decision Trees measure impurity reduction  
-    - Ensembles average across trees  
-    - Logistic uses coefficient magnitudes  
-    - KNN/SVM use permutation importance  
-    """)
 
 # --- Confusion Matrices Page ---
 elif selected_page == "Confusion Matrices":
@@ -618,10 +463,10 @@ elif selected_page == "Confusion Matrices":
     with col1:
         cm_df = pd.DataFrame([[tn,fp],[fn,tp]],
                              index=["Actual Healthy","Actual Bankrupt"],
-                             columns=["Pred Healthy","Pred Bankrupt"])
+                             columns=["Predicted Healthy","Predicted Bankrupt"])
         st.dataframe(cm_df)
-        # Visual boxes
-        pct = np.array([[100*tn/(tn+fp),100*fp/(tn+fp)],[100*fn/(fn+tp),100*tp/(fn+tp)]])
+        pct = np.array([[100*tn/(tn+fp),100*fp/(tn+fp)],
+                        [100*fn/(fn+tp),100*tp/(fn+tp)]])
         html = f"""
         <style>
         .cm-box {{padding:20px;text-align:center;margin:5px;font-weight:bold;color:white;}}
@@ -644,31 +489,18 @@ elif selected_page == "Confusion Matrices":
         - **Recall**: {rec:.4f}  
         - **F1 Score**: {f1:.4f}
         """)
-    st.markdown("### Comparison Across Models")
-    comp = pd.DataFrame(index=models, columns=["TP","FN","Detect Rate (%)","False Alarm (%)"])
-    for m in models:
-        tn2, fp2 = metrics[m]['confusion_matrix'][0]
-        fn2, tp2 = metrics[m]['confusion_matrix'][1]
-        comp.loc[m,"TP"] = tp2
-        comp.loc[m,"FN"] = fn2
-        comp.loc[m,"Detect Rate (%)"] = 100*tp2/(tp2+fn2) if tp2+fn2>0 else 0
-        comp.loc[m,"False Alarm (%)"] = 100*fp2/(tn2+fp2) if tn2+fp2>0 else 0
-    st.dataframe(comp.sort_values("Detect Rate (%)", ascending=False))
-    st.info("High recall catches more bankruptcies but can increase false alarms.")
 
 # --- Z-Score Analysis Page ---
 elif selected_page == "Z-Score Analysis":
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
     st.markdown("""
-    The Altman Z-Score combines five financial ratios:
+    Z = 1.2·T1 + 1.4·T2 + 3.3·T3 + 0.6·T4 + 0.99·T5  
+    where:
     - T1 = (Current Assets – Current Liabilities) / Total Assets  
     - T2 = Retained Earnings / Total Assets  
     - T3 = EBIT / Total Assets  
     - T4 = Market Value / Total Liabilities  
     - T5 = Net Sales / Total Assets  
-    Z = 1.2·T1 + 1.4·T2 + 3.3·T3 + 0.6·T4 + 0.99·T5
-    
-    **Zones:** Z > 2.99 (Safe), 1.8 < Z < 2.99 (Grey), Z < 1.8 (Distress)
     """)
     if st.session_state["data_loaded"]:
         req = ['Current Assets','Total Current Liabilities','Retained Earnings',
@@ -676,17 +508,13 @@ elif selected_page == "Z-Score Analysis":
         missing = [c for c in req if c not in data.columns]
         if missing:
             st.error(f"Missing columns for Z-Score: {missing}")
-            with st.expander("Column Mapping"):
-                st.write("Dataset columns:", data.columns.tolist())
-                st.write("Expected:", list(rename_map.values()))
         else:
             zdf = calculate_zscore(data)
-            with st.expander("Z-Score Stats"):
+            with st.expander("Z-Score Statistics"):
                 st.write(zdf['Z-Score'].describe())
                 st.write(zdf['Z-Score Status'].value_counts())
             if 'Bankrupt' in data.columns:
-                actual = data['Bankrupt']
-                pred = zdf['Z-Score Prediction']
+                actual = data['Bankrupt']; pred = zdf['Z-Score Prediction']
                 acc_z = (pred==actual).mean()
                 prec_z = (pred & actual).sum()/pred.sum() if pred.sum()>0 else 0
                 rec_z = (pred & actual).sum()/actual.sum() if actual.sum()>0 else 0
@@ -700,12 +528,6 @@ elif selected_page == "Z-Score Analysis":
                     'F1 Score': [f1_z]+[metrics[m]['f1'] for m in metrics]
                 }).set_index('Model')
                 st.dataframe(cmp.style.highlight_max(axis=0))
-            st.markdown("""
-            **Insights:** Z-Score is simple and interpretable but static.  
-            ML models adapt to data and can handle more features; Z-Score offers transparency.
-            """)
-    else:
-        st.error("Data not loaded. Place 'american_bankruptcy.csv' in /data.")
 
 # Footer
 st.markdown("---")
