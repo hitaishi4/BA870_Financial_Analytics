@@ -1550,7 +1550,7 @@ pythonelif selected_page == "Z-Score Analysis":
                         cm_pct[0, 1] = 100 * z_fp / (z_tn + z_fp) if (z_tn + z_fp) > 0 else 0
                         cm_pct[1, 0] = 100 * z_fn / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
                         cm_pct[1, 1] = 100 * z_tp / (z_fn + z_tp) if (z_fn + z_tp) > 0 else 0
-                        
+
                         html = f"""
                         <style>
                         .cm-box {{
