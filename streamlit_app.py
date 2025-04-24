@@ -691,7 +691,7 @@ if selected_page == "Overview":
                 autopct='%1.1f%%',
                 startangle=90,
                 colors=['#98ba66', '#ff4c4b'],
-                labeldistance=1.1  # default ~1.1; we'll nudge one label manually
+                labeldistance=0.1  # default ~1.1; we'll nudge one label manually
             )
             
             ax.axis('equal')
