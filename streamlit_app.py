@@ -125,7 +125,6 @@ td {
 </style>
 """, unsafe_allow_html=True)
 
-
 # Define column renaming mapping
 rename_map = {
     "X1":  "Current Assets",
@@ -437,7 +436,6 @@ roc_curves = {
     }
 }
 
-
 # Function to calculate Z-Score
 def calculate_zscore(df):
     """Calculate Altman Z-Score for financial data"""
@@ -672,23 +670,21 @@ if selected_page == "Overview":
         
         # Display bankruptcy distribution if available
         if 'Bankrupt' in data.columns:
-            # Count the number of bankrupt (1) and alive (0) companies
-            bankrupt_counts = data['Bankrupt'].value_counts().reset_index()
-            bankrupt_counts.columns = ['Status_Value', 'Count']
+            # Count the number of failed (1) and alive (0) companies
+            bankruptcy_counts = data['Bankrupt'].value_counts().reset_index()
+            bankruptcy_counts.columns = ['Bankrupt_Value', 'Count']
             
-            # Map the numeric values to human-readable labels
-            status_map = {1: 'Bankrupt (Failed)', 0: 'Healthy (Alive)'}
-            bankrupt_counts['Status'] = bankrupt_counts['Status_Value'].map(status_map)
+            # Map the values to human-readable labels
+            bankruptcy_counts['Status'] = bankruptcy_counts['Bankrupt_Value'].map({1: 'Bankrupt (Failed)', 0: 'Healthy (Alive)'})
             
             # Create a pie chart with updated colors (green for healthy, red for bankrupt)
             fig, ax = plt.subplots(figsize=(8, 6))
-            ax.pie(bankrupt_counts['Count'], labels=bankrupt_counts['Status'], 
+            ax.pie(bankruptcy_counts['Count'], labels=bankruptcy_counts['Status'], 
                    autopct='%1.1f%%', startangle=90, colors=['#98ba66', '#ff4c4b'])
             ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
             plt.title('Distribution of Bankruptcy Status')
             
             st.pyplot(fig)
-
 elif selected_page == "Dataset Information":
     # Show page header with new centered style
     st.markdown('<p class="page-header">Dataset Information</p>', unsafe_allow_html=True)
@@ -712,59 +708,56 @@ elif selected_page == "Dataset Information":
     
     # Information about the dataset format
     st.markdown("""
-    ### Dataset Structure
+    ### Original Dataset Structure
     
-    The original dataset uses abstract column names (X1-X18) for the financial metrics. In our analysis, 
-    we've mapped these to their actual financial meaning to make the data more interpretable.
+    The original dataset uses abstract column names (X1-X18) for the financial metrics, along with a 'status_label' column 
+    that indicates whether a company is 'alive' or 'failed'. For our analysis, we've created a numerical 'Bankrupt' column 
+    (1 for 'failed', 0 for 'alive') and mapped the X1-X18 columns to their actual financial meanings.
     """)
     
     # Display original dataset if available
     if not data_original.empty:
-        with st.expander("View Original Dataset (First 15 Rows)"):
-            st.dataframe(data_original.head(15))
+        st.markdown("### First 15 Rows of the Original Dataset")
+        st.dataframe(data_original.head(15))
         
+        # Show unique values in status_label column
+        if 'status_label' in data_original.columns:
+            status_values = data_original['status_label'].unique()
+            st.markdown(f"**Status Labels in the dataset**: {', '.join(status_values)}")
+            st.markdown("""
+            The 'status_label' column contains two values:
+            - **alive**: Companies that remain operational
+            - **failed**: Companies that have gone bankrupt
+            """)
+        
+        # Show original column names
+        st.markdown("### Original Column Names")
+        
+        # Create a list of original column names (excluding status_label and other metadata)
+        original_cols = [col for col in data_original.columns if col.startswith('X')]
+        
+        # Display the original columns in a formatted way
+        col1, col2, col3 = st.columns(3)
+        col_idx = 0
+        
+        # Divide columns into 3 columns for better display
+        for i, col in enumerate(original_cols):
+            if i % 3 == 0:
+                with col1:
+                    st.markdown(f"- **{col}**")
+            elif i % 3 == 1:
+                with col2:
+                    st.markdown(f"- **{col}**")
+            else:
+                with col3:
+                    st.markdown(f"- **{col}**")
+                    
         # Show column mapping in a nice table format
         st.markdown("### Column Mapping")
         st.markdown("""
         The table below shows how the original abstract column names are mapped to meaningful financial metrics.
         These metrics are commonly used in financial analysis and bankruptcy prediction.
         """)
-        
-        # Create two columns for the mapping display
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("""
-            <div class="dataset-card">
-                <h4>Original Column Names</h4>
-                <ul>
-            """, unsafe_allow_html=True)
-            
-            for col in rename_map.keys():
-                st.markdown(f"<li><strong>{col}</strong></li>", unsafe_allow_html=True)
-                
-            st.markdown("""
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        with col2:
-            st.markdown("""
-            <div class="dataset-card">
-                <h4>Mapped Financial Metrics</h4>
-                <ul>
-            """, unsafe_allow_html=True)
-            
-            for col in rename_map.values():
-                st.markdown(f"<li><strong>{col}</strong></li>", unsafe_allow_html=True)
-                
-            st.markdown("""
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Show complete mapping table
-        st.markdown("### Complete Column Mapping Table")
         
         # Create a dataframe for the mapping
         mapping_df = pd.DataFrame({
@@ -781,8 +774,7 @@ elif selected_page == "Dataset Information":
         Below is a preview of the transformed dataset with the first 15 rows.
         """)
         
-        with st.expander("View Transformed Dataset (First 15 Rows)"):
-            st.dataframe(data.head(15))
+        st.dataframe(data.head(15))
         
         # Financial metrics explanation
         st.markdown("### Financial Metrics Explanation")
@@ -808,10 +800,11 @@ elif selected_page == "Dataset Information":
             "Total Operating Expenses": "Costs associated with running the day-to-day operations of a business"
         }
         
-        # Display explanations in an expandable section
-        with st.expander("Financial Metrics Definitions"):
-            for metric, explanation in financial_explanations.items():
-                st.markdown(f"**{metric}**: {explanation}")
+        # Display financial metrics in a more organized way
+        st.markdown("Below are the definitions of all financial metrics used in the analysis:")
+        
+        for metric, explanation in financial_explanations.items():
+            st.markdown(f"**{metric}**: {explanation}")
         
         # Dataset statistics
         st.markdown("### Dataset Statistics")
@@ -825,16 +818,16 @@ elif selected_page == "Dataset Information":
         with col2:
             if 'Bankrupt' in data.columns:
                 bankrupt_count = data['Bankrupt'].sum()
-                st.metric("Bankrupt Companies", f"{bankrupt_count:,}")
+                st.metric("Failed Companies", f"{bankrupt_count:,}")
             else:
-                st.metric("Bankrupt Companies", "N/A")
+                st.metric("Failed Companies", "N/A")
         
         with col3:
             if 'Bankrupt' in data.columns:
-                healthy_count = len(data) - bankrupt_count
-                st.metric("Healthy Companies", f"{healthy_count:,}")
+                alive_count = len(data) - bankrupt_count
+                st.metric("Alive Companies", f"{alive_count:,}")
             else:
-                st.metric("Healthy Companies", "N/A")
+                st.metric("Alive Companies", "N/A")
         
         # Time period information
         if 'year' in data.columns:
@@ -847,11 +840,11 @@ elif selected_page == "Dataset Information":
             
             # Calculate percentages
             bankrupt_pct = 100 * bankrupt_count / len(data)
-            healthy_pct = 100 - bankrupt_pct
+            alive_pct = 100 - bankrupt_pct
             
             # Create horizontal bar chart
             fig, ax = plt.subplots(figsize=(10, 3))
-            bars = ax.barh(['Healthy (Alive)', 'Bankrupt (Failed)'], [healthy_pct, bankrupt_pct], 
+            bars = ax.barh(['Healthy (Alive)', 'Bankrupt (Failed)'], [alive_pct, bankrupt_pct], 
                           color=['#98ba66', '#ff4c4b'])
             
             # Add percentage labels
@@ -869,9 +862,9 @@ elif selected_page == "Dataset Information":
             
             # Add count labels
             ax.text(
-                healthy_pct / 2,
+                alive_pct / 2,
                 0,
-                f"{healthy_count:,} companies",
+                f"{alive_count:,} companies",
                 ha='center',
                 va='center',
                 fontweight='bold'
@@ -908,24 +901,6 @@ elif selected_page == "Dataset Information":
             """)
     else:
         st.error("No data available. Please check that the dataset is properly loaded.")
-        
-    # Additional information about financial analysis and bankruptcy prediction
-    st.markdown("### Financial Analysis for Bankruptcy Prediction")
-    
-    st.markdown("""
-    Financial metrics play a crucial role in predicting corporate bankruptcy. Analysts and researchers 
-    typically use these metrics to calculate financial ratios that serve as indicators of a company's:
-    
-    - **Liquidity**: Ability to meet short-term obligations (Current Ratio, Quick Ratio)
-    - **Profitability**: Ability to generate earnings (ROA, ROE, Profit Margin)
-    - **Leverage**: Debt load and capital structure (Debt-to-Assets, Debt-to-Equity)
-    - **Efficiency**: Asset utilization (Asset Turnover, Inventory Turnover)
-    - **Growth**: Revenue and earnings trends over time
-    
-    These metrics are combined in various ways in bankruptcy prediction models, 
-    from traditional methods like the Altman Z-Score to modern machine learning approaches.
-    """)
-
 
 elif selected_page == "Model Comparison":
     # Show page header with new centered style
@@ -1010,7 +985,6 @@ elif selected_page == "Model Comparison":
     For bankruptcy prediction, recall is particularly important as the cost of missing a bankruptcy (false negative) is typically higher 
     than incorrectly predicting bankruptcy (false positive).
     """)
-
 
 elif selected_page == "ROC Curves":
     # Show page header with new centered style
@@ -1121,7 +1095,6 @@ elif selected_page == "ROC Curves":
       - If missing a bankruptcy is very costly, choose a threshold with higher recall (upper right)
       - If falsely flagging healthy companies is costly, choose a threshold with higher specificity (lower left)
     """)
-
 
 elif selected_page == "Feature Importance":
     # Show page header with new centered style
@@ -1369,10 +1342,13 @@ elif selected_page == "Confusion Matrices":
     false alarm rate, while SVM has the lowest false alarm rate but also the lowest detection rate.
     """)
 
-elif selected_page == "Z-Score Analysis":
+Part 12: Z-Score Analysis Page
+pythonelif selected_page == "Z-Score Analysis":
     # Show page header with new centered style
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
     
+    st.markdown("""
+    ### What is the Altman Z-Score?
     st.markdown("""
     ### What is the Altman Z-Score?
     
@@ -1707,7 +1683,6 @@ elif selected_page == "Z-Score Analysis":
         - Total Liabilities
         - Net Sales
         """)
-
 
 # Footer
 st.markdown("---")
