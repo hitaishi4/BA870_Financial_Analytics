@@ -11,7 +11,7 @@ The system analyzes 18 key financial indicators, including Current Assets, Net I
 ## Dataset and Methodology
 
 ### Dataset Source
-- **Origin**: American Companies Bankruptcy Prediction Dataset (Kaggle: See Refrences)
+- **Origin**: American Companies Bankruptcy Prediction Dataset (Kaggle: See References)
 - **Time Span**: 1999-2018
 - **Companies**: ~8000 US public firms
 - **Features**: 18 financial indicators (X1-X18) mapped to standard financial metrics
@@ -42,7 +42,7 @@ This section provides **in-depth exploration** of the dataset structure:
 - **Feature Definitions**: Comprehensive financial metric explanations
 - **Class Distribution**: Visualizes the significant class imbalance (healthy vs bankrupt companies)
 
-**Key insight**: The dataset exhibits strong class imbalance, with bankrupt companies representing only ~2.3% of the total, necessitating specialized evaluation metrics.
+**Key insight**: The dataset exhibits strong class imbalance.
 
 ### Altman Z-Score Analysis Tab
 Our flagship financial analysis section showcases the **iconic Altman Z-Score** methodology:
@@ -82,7 +82,7 @@ This section provides **comprehensive benchmarking** of all models:
 - **Visual Comparisons**: Interactive charts for metric-specific analysis
 - **Traditional vs ML**: Highlights the trade-offs between interpretability and performance
 
-**Key finding**: While ML models like Random Forest achieve higher AUC (0.838), the Altman Z-Score offers superior bankruptcy detection (recall) at 28.2%.
+**Key finding**: ML models like Random Forest achieve higher AUC (0.838), but the Altman Z-Score offers superior bankruptcy detection (recall) at 28.2%.
 
 ### ROC Curves Tab
 Visualizes **model discrimination ability** through ROC analysis:
@@ -131,15 +131,24 @@ Modern ML approaches offer complementary benefits:
 
 ### Practical Implications
 For financial practitioners, this analysis suggests a **hybrid approach**:
-- Use the Z-Score for initial screening and stakeholder communication
+- Use the Z-score for initial screening and stakeholder communication
 - Deploy ML models for refined risk assessment and portfolio management
 - Combine both approaches for robust bankruptcy prediction
+
+## Bankruptcy Trends Over Time
+
+We conducted a **yearly trend analysis** of both failure counts and bankruptcy rates (1999–2018):
+
+- **Failed companies** declined from **380** in 1999 to **36** in 2018, peaking at **415** in 2003.
+- **Bankruptcy rate** dropped from **7.16%** in 1999 to **1.32%** in 2018, with an average of **6.28%**, and a high of **9.40%** in 2003.
+
+This demonstrates a **steady downward trend** in bankruptcy incidence over the 20 years.
 
 ## Technical Implementation
 
 The dashboard leverages Streamlit for interactive visualization, presenting complex financial analytics in an accessible format. Users can explore:
 - Model performance across multiple metrics
-- Feature importance and their financial implications
+- Feature importance and its financial implications
 - Detailed confusion matrices for error analysis
 - Interactive ROC curves and AUC comparisons
 
@@ -150,4 +159,4 @@ This project demonstrates that **traditional financial analysis and modern machi
 Our findings reaffirm the critical role of fundamental financial ratios in bankruptcy prediction while highlighting opportunities for enhanced accuracy through machine learning approaches.
 
 ## Reference
-The dataset used in this project came from Kaggle and this is the link: https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset
+The dataset used in this project came from Kaggle, and this is the link: https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset
