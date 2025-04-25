@@ -1331,7 +1331,7 @@ elif selected_page == "Confusion Matrices":
     false alarm rates, while SVM has the lowest false alarm rate but also the lowest detection rate.
     """)
 
-elif selected_page == "Z-Score Analysis":
+elif selected_page == "Altman Z-Score Analysis":
     # Show page header
     st.markdown('<p class="page-header">Altman Z-Score Analysis</p>', unsafe_allow_html=True)
     
