@@ -1149,27 +1149,6 @@ elif selected_page == "Feature Importance":
     
     st.dataframe(comparison_df)
     
-    # Add explanation
-    st.markdown("""
-    ### Interpreting Feature Importance
-    
-    Different models calculate feature importance in different ways:
-    
-    - **Decision Tree**: Based on the total reduction of impurity (e.g., Gini impurity) contributed by each feature
-    
-    - **Gradient Boosting & Random Forest**: Based on the average reduction in impurity across all trees
-    
-    - **Logistic Regression**: Based on the absolute values of the coefficients (larger coefficient = more important)
-    
-    - **KNN & SVM**: Based on permutation importance - how much the model's performance decreases when the feature values are randomly shuffled
-    
-    For bankruptcy prediction, important features typically include financial ratios and indicators that capture:
-    - Profitability (Net Income, EBITDA)
-    - Leverage (Debt ratios)
-    - Liquidity (Current Assets, Cash Flow)
-    - Activity (Asset Turnover)
-    """)
-
 elif selected_page == "Confusion Matrices":
     # Show page header with new centered style
     st.markdown('<p class="page-header">Confusion Matrix Analysis</p>', unsafe_allow_html=True)
