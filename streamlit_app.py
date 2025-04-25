@@ -512,7 +512,7 @@ def calculate_zscore(df):
 st.sidebar.title("Navigation")
 
 # Define pages and use radio buttons for navigation
-pages = ["Overview", "Dataset Information", "Z-Score Analysis", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices"]
+pages = ["Overview", "Dataset Information", "Altman Z-Score Analysis", "Model Comparison", "ROC Curves", "Feature Importance", "Confusion Matrices"]
 selected_page = st.sidebar.radio("", pages, key="sidebar_nav")
 
 # Add Kaggle dataset link in sidebar
