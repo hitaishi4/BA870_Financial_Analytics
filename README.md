@@ -1,5 +1,7 @@
 # Bankruptcy Prediction Dashboard
 
+##   Team: Hakob Janesian (hakob@bu.edu) and Hitaishi Hitaishi (hitaishi@bu.edu)
+
 ## Project Overview
 
 This project presents a comprehensive bankruptcy prediction system that leverages both **traditional financial analysis** and **modern machine learning techniques** to assess corporate financial health. Using the **American Companies Bankruptcy Prediction Dataset** from Kaggle, which contains financial data from approximately 8,000 US public companies between 1999-2018, our dashboard provides deep insights into bankruptcy risk factors and model performance.
