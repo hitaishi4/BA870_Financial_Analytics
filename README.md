@@ -69,7 +69,7 @@ The analysis reveals the Z-Score's **remarkable performance** despite its simpli
 - **F1 Score**: 11.0%
 
 #### Financial Insights
-The Z-Score excels in bankruptcy detection through its **balanced approach** to financial health assessment. It combines:
+The Altman Z-Score excels in bankruptcy detection through its **balanced approach** to financial health assessment. It combines:
 - **Liquidity**: Working capital ratio
 - **Profitability**: EBIT and retained earnings
 - **Leverage**: Market value to debt ratio
@@ -82,7 +82,7 @@ This section provides **comprehensive benchmarking** of all models:
 - **Visual Comparisons**: Interactive charts for metric-specific analysis
 - **Traditional vs ML**: Highlights the trade-offs between interpretability and performance
 
-**Key finding**: ML models like Random Forest achieve higher AUC (0.838), but the Altman Z-Score offers superior bankruptcy detection (recall) at 28.2%.
+**Key finding**: ML models like Random Forest achieve higher AUC (0.838), but the Altman Z-Score model offers superior bankruptcy detection (recall) at 28.2%.
 
 ### ROC Curves Tab
 Visualizes **model discrimination ability** through ROC analysis:
@@ -91,7 +91,7 @@ Visualizes **model discrimination ability** through ROC analysis:
 - **Individual Analysis**: Detailed view of each model's ROC curve
 - **AUC Comparison**: Quantifies overall model performance
 
-The Random Forest and Gradient Boosting models show **superior discrimination** with AUCs of 0.838 and 0.827 respectively, while the Z-Score achieves a respectable 0.592.
+The Random Forest and Gradient Boosting models show **superior discrimination** with AUCs of 0.838 and 0.827 respectively, while the Altman Z-Score model achieves a respectable 0.592.
 
 ### Feature Importance Tab
 Reveals **critical financial drivers** for bankruptcy prediction:
@@ -100,7 +100,7 @@ Reveals **critical financial drivers** for bankruptcy prediction:
 - **Top Features**: Retained Earnings, Market Value, and Total Long-term Debt consistently emerge as key indicators
 - **Cross-model Comparison**: Highlights agreement and divergence in feature importance
 
-**Insight**: The consistency between ML models and the Z-Score's component ratios validates the financial theory underlying bankruptcy prediction.
+**Insight**: The consistency between ML models and the Altman Z-Score model's component ratios validates the financial theory underlying bankruptcy prediction.
 
 ### Confusion Matrices Tab
 Provides **detailed classification performance** analysis:
@@ -109,12 +109,12 @@ Provides **detailed classification performance** analysis:
 - **Metric Calculations**: True/False Positive/Negative breakdowns
 - **Detection Rates**: Comparative analysis of bankruptcy identification
 
-The Z-Score achieves the **highest detection rate** at 29.3%, identifying more actual bankruptcies than sophisticated ML models despite higher false positives.
+The Z-Score model achieves the **highest detection rate** at 29.3%, identifying more actual bankruptcies than sophisticated ML models despite higher false positives.
 
 ## Key Findings and Implications
 
-### The Enduring Power of the Altman Z-Score
-Despite being developed in 1968, the Altman Z-Score demonstrates **remarkable effectiveness** in modern bankruptcy prediction. Its strengths include:
+### The Enduring Power of the Altman Z-Score model
+Despite being developed in 1968, the Altman Z-Score model demonstrates **remarkable effectiveness** in modern bankruptcy prediction. Its strengths include:
 
 1. **Superior Recall**: Highest bankruptcy detection rate among all models
 2. **Interpretability**: Clear financial rationale for predictions
@@ -131,7 +131,7 @@ Modern ML approaches offer complementary benefits:
 
 ### Practical Implications
 For financial practitioners, this analysis suggests a **hybrid approach**:
-- Use the Z-score for initial screening and stakeholder communication
+- Use the Altman Z-score for initial screening and stakeholder communication
 - Deploy ML models for refined risk assessment and portfolio management
 - Combine both approaches for robust bankruptcy prediction
 
