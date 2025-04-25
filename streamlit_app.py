@@ -541,7 +541,7 @@ st.markdown('<div class="main-content">', unsafe_allow_html=True)
 # Show main header and introduction only on the overview page
 if selected_page == "Overview":
     st.markdown('<p class="main-header">Bankruptcy Prediction Dashboard</p>', unsafe_allow_html=True)
-    st.markdown('<h class="main-header">Hakob Janesian & Hitaishi</h>', unsafe_allow_html=True)
+    st.markdown('<p class="main-header">Hakob Janesian & Hitaishi</p>', unsafe_allow_html=True)
     
     st.markdown("""
     This dashboard presents a comprehensive analysis of bankruptcy prediction models using financial data 
