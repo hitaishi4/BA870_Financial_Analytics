@@ -11,7 +11,7 @@ The system analyzes 18 key financial indicators, including Current Assets, Net I
 ## Dataset and Methodology
 
 ### Dataset Source
-- **Origin**: American Companies Bankruptcy Prediction Dataset (Kaggle: https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset)
+- **Origin**: American Companies Bankruptcy Prediction Dataset (Kaggle: See Refrences)
 - **Time Span**: 1999-2018
 - **Companies**: ~8000 US public firms
 - **Features**: 18 financial indicators (X1-X18) mapped to standard financial metrics
