@@ -9,7 +9,7 @@ The system analyzes 18 key financial indicators, including Current Assets, Net I
 ## Dataset and Methodology
 
 ### Dataset Source
-- **Origin**: American Companies Bankruptcy Prediction Dataset (Kaggle)
+- **Origin**: American Companies Bankruptcy Prediction Dataset (Kaggle: https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset)
 - **Time Span**: 1999-2018
 - **Companies**: ~8,000 US public firms
 - **Features**: 18 financial indicators (X1-X18) mapped to standard financial metrics
@@ -146,3 +146,6 @@ The dashboard leverages Streamlit for interactive visualization, presenting comp
 This project demonstrates that **traditional financial analysis and modern machine learning are complementary**, not competitive, in bankruptcy prediction. The Altman Z-Score's enduring relevance, combined with the enhanced discrimination of ML models, provides financial analysts with a powerful toolkit for risk assessment.
 
 Our findings reaffirm the critical role of fundamental financial ratios in bankruptcy prediction while highlighting opportunities for enhanced accuracy through machine learning approaches.
+
+## Reference
+The dataset used in this project came from Kaggle and this is the link: https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset
