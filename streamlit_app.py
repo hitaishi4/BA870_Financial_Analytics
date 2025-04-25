@@ -783,6 +783,112 @@ elif selected_page == "Dataset Information":
         
         st.dataframe(data.head(15))
         
+        # Dataset statistics
+        st.markdown("### Dataset Statistics")
+        
+        # Create 3 columns for key statistics
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Total Records", "71,303")
+            st.metric("Total Bankrupt Cases", "5,220")
+        
+        with col2:
+            st.metric("Average Failures per Year", "261.0")
+            st.metric("Average Bankruptcy Rate", "6.28%")
+        
+        with col3:
+            st.metric("Highest Bankruptcy Year", "2003 (415 failures)")
+            st.metric("Lowest Bankruptcy Year", "2018 (36 failures)")
+        
+        # Bankruptcy trend visualizations
+        st.markdown("### Bankruptcy Trends Over Time")
+        
+        # Create tabs for different visualizations
+        viz_tab1, viz_tab2 = st.tabs(["Number of Failed Companies", "Bankruptcy Rate"])
+        
+        with viz_tab1:
+            # Failed companies by year visualization
+            year_data_failed = {
+                'year': [1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 
+                         2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018],
+                'failed': [380, 404, 414, 414, 415, 404, 379, 366, 336, 284, 
+                           234, 218, 194, 182, 167, 142, 111, 83, 57, 36]
+            }
+            
+            df_failed = pd.DataFrame(year_data_failed)
+            
+            fig, ax = plt.subplots(figsize=(12, 8))
+            bars = ax.bar(df_failed['year'], df_failed['failed'], color='#395c40')
+            
+            ax.set_xticks(df_failed['year'])
+            ax.set_xticklabels(df_failed['year'], rotation=0, ha='center', fontsize=10)
+            ax.set_xlabel('Year', fontsize=12, labelpad=10)
+            ax.set_ylabel('Number of Failed Companies', fontsize=12, labelpad=10)
+            ax.set_title('Number of Failed Companies by Year (1999-2018)', fontsize=18)
+            
+            for bar in bars:
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width() / 2, height, f'{int(height)}',
+                        ha='center', va='bottom', fontsize=8)
+            
+            max_h = df_failed['failed'].max()
+            ax.set_ylim(0, max_h * 1.10)
+            ax.grid(axis='y', alpha=0.3, linestyle='--')
+            
+            plt.tight_layout()
+            st.pyplot(fig)
+            
+            # Key insights for failed companies
+            st.markdown("""
+            **Key Insights:**
+            - Peak in bankruptcies: 2003 with 415 failures
+            - Consistent decline after 2003
+            - Dramatic drop to only 36 failures by 2018
+            - Total bankruptcies: 5,220 companies
+            """)
+        
+        with viz_tab2:
+            # Bankruptcy rate by year visualization
+            year_data_rate = {
+                'year': [1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 
+                         2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018],
+                'rate': [7.16, 7.73, 8.45, 8.90, 9.40, 9.29, 9.01, 8.87, 8.38, 7.36, 
+                         6.25, 6.01, 5.52, 5.22, 4.79, 4.05, 3.31, 2.60, 1.89, 1.32]
+            }
+            
+            df_rate = pd.DataFrame(year_data_rate)
+            
+            fig, ax = plt.subplots(figsize=(12, 8))
+            bars = ax.bar(df_rate['year'], df_rate['rate'], color='#395c40')
+            
+            ax.set_xticks(df_rate['year'])
+            ax.set_xticklabels(df_rate['year'], rotation=0, ha='center', fontsize=10)
+            ax.set_xlabel('Year', fontsize=12, labelpad=10)
+            ax.set_ylabel('Bankruptcy Rate (%)', fontsize=12, labelpad=10)
+            ax.set_title('Bankruptcy Rate by Year (1999-2018)', fontsize=18)
+            
+            for bar in bars:
+                height = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width() / 2, height, f'{height:.2f}%',
+                        ha='center', va='bottom', fontsize=8)
+            
+            max_h = df_rate['rate'].max()
+            ax.set_ylim(0, max_h * 1.10)
+            ax.grid(axis='y', alpha=0.3, linestyle='--')
+            
+            plt.tight_layout()
+            st.pyplot(fig)
+            
+            # Key insights for bankruptcy rate
+            st.markdown("""
+            **Key Insights:**
+            - Highest rate: 9.40% in 2003
+            - Lowest rate: 1.32% in 2018
+            - 81.6% decline in bankruptcy rate from 1999 to 2018
+            - Average bankruptcy rate over 20 years: 6.28%
+            """)
+        
         # Financial metrics explanation
         st.markdown("### Financial Metrics Explanation")
         
@@ -812,54 +918,6 @@ elif selected_page == "Dataset Information":
         
         for metric, explanation in financial_explanations.items():
             st.markdown(f"**{metric}**: {explanation}")
-        
-        # Dataset statistics
-        st.markdown("### Dataset Statistics")
-        
-        # Create 3 columns for key statistics
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("Total Companies", f"{len(data):,}")
-        
-        with col2:
-            if 'Bankrupt' in data.columns:
-                bankrupt_count = data['Bankrupt'].sum()
-                st.metric("Failed Companies", f"{bankrupt_count:,}")
-            else:
-                st.metric("Failed Companies", "N/A")
-        
-        with col3:
-            if 'Bankrupt' in data.columns:
-                alive_count = len(data) - bankrupt_count
-                st.metric("Alive Companies", f"{alive_count:,}")
-            else:
-                st.metric("Alive Companies", "N/A")
-        
-        # Time period information
-        if 'year' in data.columns:
-            years = data['year'].unique()
-            st.markdown(f"**Time Period Covered**: {min(years)} - {max(years)}")
-        
-        # Class imbalance visualization if bankruptcy data is available
-        if 'Bankrupt' in data.columns:
-            st.markdown("### Class Distribution")
-            
-            # Calculate percentages
-            bankrupt_pct = 100 * bankrupt_count / len(data)
-            alive_pct = 100 - bankrupt_pct
-            
-            # Add note about class imbalance
-            st.info("""
-            **Note on Class Imbalance**: This dataset exhibits significant class imbalance, with a much smaller 
-            proportion of bankrupt companies compared to healthy ones. This imbalance is common in bankruptcy 
-            prediction and requires special techniques such as:
-            
-            - Oversampling the minority class
-            - Undersampling the majority class
-            - Using class weights
-            - Employing specialized metrics (F1-score, AUC) rather than just accuracy
-            """)
     else:
         st.error("No data available. Please check that the dataset is properly loaded.")
 
