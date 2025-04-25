@@ -562,6 +562,7 @@ if selected_page == "Overview":
     ### Methodology
     
     - **Training Data**: Financial data from 1999-2011
+    - **Validation Data**: Financial data from 2012-2014 
     - **Testing Data**: Financial data from 2015-2018
     - **Features**: 18 financial indicators including Current Assets, Net Income, EBITDA, etc.
     - **Target Variable**: Binary classification (Bankrupt vs Alive)
