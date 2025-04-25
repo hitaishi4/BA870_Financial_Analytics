@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-This project presents a comprehensive bankruptcy prediction system that leverages both **traditional financial analysis** and **modern machine learning techniques** to assess corporate financial health. Using the **American Companies Bankruptcy Prediction Dataset** from Kaggle, which contains financial data from approximately 8,000 US public companies between 1999-2018, our dashboard provides deep insights into bankruptcy risk factors and model performance.
+This project presents a comprehensive bankruptcy prediction system that leverages both **traditional financial analysis** and **modern machine learning techniques** to assess corporate financial health. Using the **American Companies Bankruptcy Prediction Dataset** from Kaggle, which contains financial data from approximately 8000 US public companies between 1999-2018, our dashboard provides deep insights into bankruptcy risk factors and model performance.
 
 The system analyzes 18 key financial indicators, including Current Assets, Net Income, EBITDA, and more, to predict bankruptcy outcomes. By combining the time-tested **Altman Z-Score** methodology with cutting-edge machine learning models, we offer a sophisticated platform for financial risk assessment.
 
@@ -13,7 +13,7 @@ The system analyzes 18 key financial indicators, including Current Assets, Net I
 ### Dataset Source
 - **Origin**: American Companies Bankruptcy Prediction Dataset (Kaggle: https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset)
 - **Time Span**: 1999-2018
-- **Companies**: ~8,000 US public firms
+- **Companies**: ~8000 US public firms
 - **Features**: 18 financial indicators (X1-X18) mapped to standard financial metrics
 - **Target**: Binary classification (Bankrupt vs Alive)
 
