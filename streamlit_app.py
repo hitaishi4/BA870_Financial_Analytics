@@ -1520,7 +1520,7 @@ elif selected_page == "Altman Z-Score Analysis":
                     with col1:
                         st.markdown("### Z-Score Confusion Matrix")
                         z_cm_df = pd.DataFrame(
-                            [[10839, 1156], [203, 84]],  # Using actual values from the notebook
+                            [[10816, 1179], [206, 81]],  # Using actual values from the notebook
                             index=['Actual Alive', 'Actual Bankrupt'],
                             columns=['Predicted Alive', 'Predicted Bankrupt']
                         )
