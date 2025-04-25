@@ -229,12 +229,12 @@ feature_names = [
 # Define updated metrics from your analysis including Altman Z-score
 metrics = {
     'Altman Z-score': {
-        'accuracy': 0.8894,
-        'precision': 0.0677,
-        'recall': 0.2927,
-        'f1': 0.1100,
-        'auc': 0.598,  # From the ROC curve data you provided
-        'confusion_matrix': [[10839, 1156], [203, 84]]
+        'accuracy': 0.8872,
+        'precision': 0.0643,
+        'recall': 0.2822,
+        'f1': 0.1047,
+        'auc': 0.592,  # From the ROC curve data you provided
+        'confusion_matrix': [[10816, 1179], [206, 81]]
     },
     'Decision Tree': {
         'accuracy': 0.8924,
@@ -416,7 +416,7 @@ roc_curves = {
     'Altman Z-score': {
         'fpr': [0.0, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         'tpr': [0.0, 0.05, 0.1, 0.15, 0.2, 0.24, 0.32, 0.40, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
-        'auc': 0.598
+        'auc': 0.592
     },
  
     'Decision Tree': {
