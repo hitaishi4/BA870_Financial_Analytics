@@ -58,9 +58,9 @@ Where:
 - **T5**: Sales / Total Assets
 
 #### Classification Zones
-- **Safe Zone** (Z > 2.99): Low bankruptcy risk
-- **Grey Zone** (1.8 < Z < 2.99): Moderate risk
-- **Distress Zone** (Z < 1.8): High bankruptcy risk
+- **Safe Zone** (Z > 2.99): **Low bankruptcy risk**
+- **Grey Zone** (1.8 < Z < 2.99): **Moderate risk**
+- **Distress Zone** (Z < 1.8): **High bankruptcy risk**
 
 The analysis reveals the Z-Score's **remarkable performance** despite its simplicity:
 - **Accuracy**: 88.9%
