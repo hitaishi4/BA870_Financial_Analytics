@@ -159,4 +159,5 @@ This project demonstrates that **traditional financial analysis and modern machi
 Our findings reaffirm the critical role of fundamental financial ratios in bankruptcy prediction while highlighting opportunities for enhanced accuracy through machine learning approaches.
 
 ## Reference
-The dataset used in this project came from Kaggle, and this is the link: https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset
+The dataset used in this project came from Kaggle, and this is the link:
+https://www.kaggle.com/datasets/utkarshx27/american-companies-bankruptcy-prediction-dataset
